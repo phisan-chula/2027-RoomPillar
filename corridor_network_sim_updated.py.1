@@ -1,0 +1,1263 @@
+import argparse
+import subprocess
+import shlex
+import shutil
+import os
+from pathlib import Path
+import xml.etree.ElementTree as ET
+from xml.dom import minidom
+import numpy as np
+import pandas as pd
+import geopandas as gpd
+from shapely.geometry import Point, LineString, Polygon
+from shapely.affinity import scale, rotate
+from scipy.stats import chi2, norm
+import lmfit
+import matplotlib.pyplot as plt
+from typing import Callable, Tuple, Optional, Dict
+
+
+# ==============================================================================
+# GLOBAL SIMULATION, ADJUSTMENT & STYLING CONSTANTS (DEFAULTS)
+# ==============================================================================
+ALIGNMENT_TYPE = "straight"          # Options: "straight", "curvy", "zigzag"
+STRAIGHT_AZIMUTH_DEG = 75.0
+CURVY_AMPLITUDE_M = 35.0
+CURVY_WAVELENGTH_M = 1200.0
+ZIGZAG_SEGMENT_LEN_M = 500.0
+ZIGZAG_DEFLECTION_DEG = 18.0
+ORIGIN_EN = (1000.0, 1000.0)
+
+WID_COR_M = 10.0                     # Tunnel / corridor width (m)
+CTRL_SPAC_M = 500.0                  # Control station pair spacing along corridor (m)
+NUM_SPANS = 100                      # Number of 500 m spans (100 spans = 50 km tunnel)
+TS_LATERAL_OFFSET_M = 1.5            # Alternating lateral offset of TS setup from centerline (m)
+
+# Total Station Observation Constants
+NEAREST_K_TARGETS = 4                # Number of nearest control targets observed per TS setup
+LINK_CONSECUTIVE_TS = True           # Observe 1 dir + 1 dist from TS_n to both TS_{n-1} and TS_{n+1}
+SIGMA_DIR_ARCSEC = 2.0               # Direction accuracy (± arcsec)
+SIGMA_DIST_MM = 3.0                  # Distance accuracy (± mm)
+SIGMA_DIST_PPM = 0.0                 # Distance ppm term (0.0 for pure ±3 mm)
+
+# Gyro-Theodolite Observation Constants (deployed at TS_XX positions)
+USE_GYRO = False                     # True: deploy Gyro-Theodolite | False: pure TS free network
+GYRO_EVERY = 5                       # Deploy Gyro-Theodolite every N-th TS station (TS_01, TS_06, ...)
+SIGMA_GYRO_AZ_ARCSEC = 3.0           # Gyro-Azimuth accuracy (± arcsec)
+GYRO_AZ_TO = 2                       # Number of gyro-azimuth target directions per setup (1 BS + 1 FS)
+
+APPROX_COORD_NOISE_M = 0.30          # Initial approximate coordinate perturbation (m)
+INNER_CONSTRAINT_SIGMA = 1e-6        # Tight weight for inner datum constraints
+CONFIDENCE_LEVEL = 0.95              # Confidence level for 2D error ellipses (95%)
+ELLIPSE_EXAGGERATION = 100.0         # Visual scaling factor for plotting error ellipses
+SIGNIFICANCE_ALPHA = 0.05            # Global Chi-Square test significance level
+BAARDA_ALPHA_0 = 0.001               # Data snooping w-test significance level
+
+# Plotting Style Constants
+PLOT_ZOOM_STATIONS: Optional[int] = None  # None = full corridor | e.g. 10 = zoom first 10 stations
+X_EXTENT_PAD_FRAC = 0.10                  # +10% total margin on x-axis (5% each side)
+Y_EXTENT_PAD_FRAC = 0.30                  # +30% total margin on y-axis (15% each side)
+TUNNEL_WALL_COLOR = "#6E2C00"             # Rich dark brown for tunnel walls
+TUNNEL_WALL_LW = 2.8                      # Thick line width for tunnel walls
+TUNNEL_FILL_COLOR = "#f5ebe0"             # Subtle light tan tunnel interior fill
+MEAS_RAY_COLOR = "#e74c3c"                # Thin red for TS -> Control sightlines
+MEAS_RAY_LW = 0.55                        # Thin line width for TS -> Control rays
+TS_LINK_COLOR = "#1b4f72"                 # Navy blue for direct TS_{n-1} <-> TS_n <-> TS_{n+1} legs
+TS_LINK_LW = 0.95                         # Line width for TS -> TS traverse legs
+GYRO_RAY_COLOR = "#1e8449"                # Emerald green for Gyro-Azimuth rays
+GYRO_RAY_LW = 1.4                         # Distinct line width for Gyro-Azimuth rays
+GYRO_MARKER_COLOR = "#27ae60"             # Marker color for Gyro-Theodolite setups
+
+CRS_EPSG = "EPSG:32647"
+RANDOM_SEED = 2026
+
+# Output Directory & Default Filenames
+OUTPUT_DIR = "RESULT_SIM"
+OUTPUT_PNG = "corridor_free_net_ts_link.png"
+OUTPUT_SVG = "corridor_free_net_ts_link.svg"
+OUTPUT_GAMA_XML = "corridor_free_net_gama.xml"
+OUTPUT_COORD_CSV = "corridor_station_coordinates.csv"
+
+
+# ==============================================================================
+# Helper: Radians to GNU Gama DMS Format (DDD-MM-SS.ssss)
+# ==============================================================================
+
+def rad_to_gama_dms(rad: float) -> str:
+    """Converts angle in radians [0, 2*pi) to GNU Gama DMS string 'DDD-MM-SS.ssss'."""
+    deg_total = np.rad2deg(rad % (2.0 * np.pi))
+    d = int(deg_total)
+    rem_m = (deg_total - d) * 60.0
+    m = int(rem_m)
+    s = (rem_m - m) * 60.0
+    if round(s, 4) >= 60.0:
+        s = 0.0
+        m += 1
+    if m >= 60:
+        m = 0
+        d = (d + 1) % 360
+    return f"{d}-{m:02d}-{s:07.4f}"
+
+
+# ==============================================================================
+# 1. Extensible Alignment Functions: s (chainage) -> (Easting, Northing)
+# ==============================================================================
+
+def straight_alignment(
+    s: float,
+    azimuth_deg: float = STRAIGHT_AZIMUTH_DEG,
+    origin: Tuple[float, float] = ORIGIN_EN
+) -> Tuple[float, float]:
+    """Straight corridor centerline at a constant grid azimuth."""
+    az = np.deg2rad(azimuth_deg)
+    return origin[0] + s * np.sin(az), origin[1] + s * np.cos(az)
+
+
+def curvy_alignment(
+    s: float,
+    amplitude: float = CURVY_AMPLITUDE_M,
+    wavelength: float = CURVY_WAVELENGTH_M,
+    origin: Tuple[float, float] = ORIGIN_EN
+) -> Tuple[float, float]:
+    """Smooth sinusoidal corridor centerline along Easting."""
+    return origin[0] + s, origin[1] + amplitude * np.sin(2.0 * np.pi * s / wavelength)
+
+
+def zigzag_alignment(
+    s: float,
+    segment_len: float = ZIGZAG_SEGMENT_LEN_M,
+    deflection_deg: float = ZIGZAG_DEFLECTION_DEG,
+    origin: Tuple[float, float] = ORIGIN_EN
+) -> Tuple[float, float]:
+    """Piecewise-linear zigzag corridor alternating left/right every `segment_len`."""
+    idx = int(s // segment_len)
+    rem = s - idx * segment_len
+    defl = np.deg2rad(deflection_deg)
+
+    e, n = origin
+    for i in range(idx):
+        az = (np.pi / 2.0) + (defl if i % 2 == 0 else -defl)
+        e += segment_len * np.sin(az)
+        n += segment_len * np.cos(az)
+
+    az_curr = (np.pi / 2.0) + (defl if idx % 2 == 0 else -defl)
+    return e + rem * np.sin(az_curr), n + rem * np.cos(az_curr)
+
+
+def get_alignment_strategy(kind: str) -> "CorridorAlignment":
+    """Factory returning a CorridorAlignment instance from global constants."""
+    kind_clean = kind.strip().lower()
+    if kind_clean == "straight":
+        return CorridorAlignment(lambda s: straight_alignment(s))
+    if kind_clean == "curvy":
+        return CorridorAlignment(lambda s: curvy_alignment(s))
+    if kind_clean == "zigzag":
+        return CorridorAlignment(lambda s: zigzag_alignment(s))
+    raise ValueError(f"Unknown ALIGNMENT_TYPE: {kind!r}. Choose 'straight', 'curvy', or 'zigzag'.")
+
+
+class CorridorAlignment:
+    """Wraps any callable f(s) -> (E, N) to generate centerline, offsets, and polygons."""
+
+    def __init__(self, func: Callable[[float], Tuple[float, float]], ds: float = 1e-3):
+        self.func = func
+        self.ds = ds
+
+    def point_at(self, s: float, offset: float = 0.0) -> Tuple[float, float]:
+        """Returns (E, N) at chainage `s` and perpendicular `offset` (+ right, - left)."""
+        e0, n0 = self.func(s)
+        e1, n1 = self.func(s + self.ds)
+        de, dn = e1 - e0, n1 - n0
+        norm_len = np.hypot(de, dn)
+        te, tn = de / norm_len, dn / norm_len
+        ne, nn = tn, -te  # Right-hand unit normal
+        return e0 + offset * ne, n0 + offset * nn
+
+    def build_corridor_gdf(
+        self,
+        max_s: float,
+        wid_cor: float,
+        crs: str = CRS_EPSG,
+        step: float = 2.0
+    ) -> gpd.GeoDataFrame:
+        """Builds a GeoDataFrame with tunnel boundary polygon, wall LineStrings, and centerline."""
+        s_vals = np.arange(0.0, max_s + step, step)
+        half_w = wid_cor / 2.0
+        cl_pts = [self.point_at(s, 0.0) for s in s_vals]
+        left_pts = [self.point_at(s, -half_w) for s in s_vals]
+        right_pts = [self.point_at(s, half_w) for s in s_vals]
+
+        poly = Polygon(left_pts + right_pts[::-1])
+        left_wall = LineString(left_pts)
+        right_wall = LineString(right_pts)
+        centerline = LineString(cl_pts)
+
+        return gpd.GeoDataFrame(
+            {"feature": ["corridor_boundary", "left_wall", "right_wall", "centerline"]},
+            geometry=[poly, left_wall, right_wall, centerline],
+            crs=crs
+        )
+
+
+# ==============================================================================
+# 2. GeoPandas + lmfit Free-Network Corridor Simulator (TS + TS-Link + Gyro)
+# ==============================================================================
+
+class CorridorFreeNetworkSim:
+    def __init__(
+        self,
+        alignment: CorridorAlignment,
+        alignment_name: str = ALIGNMENT_TYPE,
+        wid_cor: float = WID_COR_M,
+        ctrl_spac: float = CTRL_SPAC_M,
+        crs: str = CRS_EPSG,
+        seed: int = RANDOM_SEED
+    ):
+        self.alignment = alignment
+        self.alignment_name = alignment_name
+        self.wid_cor = wid_cor
+        self.ctrl_spac = ctrl_spac
+        self.crs = crs
+        self.rng = np.random.default_rng(seed)
+
+        self.corridor_gdf: Optional[gpd.GeoDataFrame] = None
+        self.stations_gdf: Optional[gpd.GeoDataFrame] = None
+        self.observations_gdf: Optional[gpd.GeoDataFrame] = None
+        self.ellipses_gdf: Optional[gpd.GeoDataFrame] = None
+        self.params = lmfit.Parameters()
+        self.result: Optional[lmfit.minimizer.MinimizerResult] = None
+        self.stats: Dict[str, object] = {}
+        self.has_gyro: bool = False
+        self.link_ts: bool = LINK_CONSECUTIVE_TS
+        self.num_spans: int = NUM_SPANS
+        self.gyro_every: int = GYRO_EVERY
+        self.gyro_az_to: int = GYRO_AZ_TO
+        self.sigma_gyro_arcsec: float = SIGMA_GYRO_AZ_ARCSEC
+        self.sigma_dist_mm: float = SIGMA_DIST_MM
+        self.sigma_dist_ppm: float = SIGMA_DIST_PPM
+        self.sigma_dir_arcsec: float = SIGMA_DIR_ARCSEC
+
+    def build_corridor_topology(
+        self,
+        num_spans: int = NUM_SPANS,
+        use_gyro: bool = USE_GYRO,
+        gyro_every: int = GYRO_EVERY,
+        approx_noise_m: float = APPROX_COORD_NOISE_M
+    ) -> None:
+        """
+        Places control pairs at `ctrl_spac` intervals and Total Station setups mid-span.
+        If `use_gyro=True`, marks every `gyro_every`-th TS setup (`has_gyro=True`).
+        ALL station coordinates are treated as FREE unknowns.
+        """
+        self.num_spans = num_spans
+        self.gyro_every = gyro_every
+        max_s = num_spans * self.ctrl_spac
+        self.corridor_gdf = self.alignment.build_corridor_gdf(max_s, self.wid_cor, crs=self.crs)
+        half_w = self.wid_cor / 2.0
+
+        records = []
+        # 1. Control Targets @ 0, 500, 1000, ... (Initially unknown coordinates)
+        for i in range(num_spans + 1):
+            s = i * self.ctrl_spac
+            for side, sign in [("L", -1.0), ("R", 1.0)]:
+                stn_id = f"CP_{i:02d}_{side}"
+                te, tn = self.alignment.point_at(s, offset=sign * half_w)
+                ae = te + self.rng.normal(0.0, approx_noise_m)
+                an = tn + self.rng.normal(0.0, approx_noise_m)
+                records.append({
+                    "station_id": stn_id,
+                    "role": "CTRL",
+                    "has_gyro": False,
+                    "chainage": s,
+                    "offset": sign * half_w,
+                    "true_e": te,
+                    "true_n": tn,
+                    "approx_e": ae,
+                    "approx_n": an
+                })
+
+        # 2. Total Station Setups mid-span @ 250, 750, 1250, ...
+        for i in range(num_spans):
+            s_mid = (i + 0.5) * self.ctrl_spac
+            ts_offset = TS_LATERAL_OFFSET_M if i % 2 == 0 else -TS_LATERAL_OFFSET_M
+            stn_id = f"TS_{i+1:02d}"
+            is_gyro = bool(use_gyro) and (gyro_every > 0) and (i % gyro_every == 0)
+            te, tn = self.alignment.point_at(s_mid, offset=ts_offset)
+            ae = te + self.rng.normal(0.0, approx_noise_m)
+            an = tn + self.rng.normal(0.0, approx_noise_m)
+            records.append({
+                "station_id": stn_id,
+                "role": "TS",
+                "has_gyro": is_gyro,
+                "chainage": s_mid,
+                "offset": ts_offset,
+                "true_e": te,
+                "true_n": tn,
+                "approx_e": ae,
+                "approx_n": an
+            })
+
+        df = pd.DataFrame(records)
+        geom = gpd.points_from_xy(df["approx_e"], df["approx_n"])
+        self.stations_gdf = gpd.GeoDataFrame(df, geometry=geom, crs=self.crs).set_index("station_id", drop=False)
+        self.stations_gdf.index.name = None
+        self.has_gyro = bool(self.stations_gdf["has_gyro"].any())
+
+        # Register ALL station coordinates as free parameters (vary=True)
+        self.params = lmfit.Parameters()
+        for row in self.stations_gdf.itertuples():
+            self.params.add(f"{row.station_id}_E", value=row.approx_e, vary=True)
+            self.params.add(f"{row.station_id}_N", value=row.approx_n, vary=True)
+            if row.role == "TS":
+                true_z0 = self.rng.uniform(0.0, 2.0 * np.pi)
+                self.params.add(f"{row.station_id}_Z0", value=true_z0, vary=True)
+
+    def simulate_observations(
+        self,
+        k_nearest: int = NEAREST_K_TARGETS,
+        link_consecutive_ts: bool = LINK_CONSECUTIVE_TS,
+        sigma_dir_arcsec: float = SIGMA_DIR_ARCSEC,
+        sigma_dist_mm: float = SIGMA_DIST_MM,
+        sigma_dist_ppm: float = SIGMA_DIST_PPM,
+        gyro_az_to: int = GYRO_AZ_TO,
+        sigma_gyro_arcsec: float = SIGMA_GYRO_AZ_ARCSEC,
+        enforce_corridor_los: bool = False
+    ) -> None:
+        """
+        From each Total Station setup `TS_n`:
+          1. Observes horizontal directions (unknown Z0) and distances to `k_nearest` control targets.
+          2. If `link_consecutive_ts=True`, observes 1 horizontal direction (tied to Z0) and 1 distance
+             to BOTH adjacent Total Station setups `TS_{n-1}` (backsight) and `TS_{n+1}` (foresight).
+          3. If `has_gyro=True`, observes `gyro_az_to` grid azimuths (1 BS + 1 FS) with a Gyro-Theodolite.
+        """
+        if self.stations_gdf is None:
+            raise RuntimeError("Call build_corridor_topology() before simulate_observations().")
+
+        self.link_ts = link_consecutive_ts
+        self.sigma_dir_arcsec = sigma_dir_arcsec
+        self.sigma_dist_mm = sigma_dist_mm
+        self.sigma_dist_ppm = sigma_dist_ppm
+        self.gyro_az_to = gyro_az_to
+        self.sigma_gyro_arcsec = sigma_gyro_arcsec
+
+        ts_df = self.stations_gdf[self.stations_gdf["role"] == "TS"].sort_values("chainage")
+        ctrl_df = self.stations_gdf[self.stations_gdf["role"] == "CTRL"]
+        corridor_poly = self.corridor_gdf.loc[
+            self.corridor_gdf["feature"] == "corridor_boundary", "geometry"
+        ].iloc[0]
+
+        ts_rows = list(ts_df.itertuples())
+        obs_records = []
+
+        for ts_idx, ts in enumerate(ts_rows):
+            dists = np.hypot(ctrl_df["true_e"] - ts.true_e, ctrl_df["true_n"] - ts.true_n)
+            nearest_targets = ctrl_df.assign(_dist=dists).nsmallest(k_nearest, "_dist")
+
+            z0_true = self.params[f"{ts.station_id}_Z0"].value
+            first_cp = nearest_targets.iloc[0]
+            approx_az0 = np.arctan2(
+                first_cp["approx_e"] - ts.approx_e,
+                first_cp["approx_n"] - ts.approx_n
+            ) % (2.0 * np.pi)
+
+            first_obs_dir = None
+            # 1. Observations to nearest K control targets
+            for idx_t, cp in enumerate(nearest_targets.itertuples()):
+                de = cp.true_e - ts.true_e
+                dn = cp.true_n - ts.true_n
+                true_dist = np.hypot(de, dn)
+                true_az = np.arctan2(de, dn) % (2.0 * np.pi)
+                true_dir = (true_az - z0_true) % (2.0 * np.pi)
+
+                los_line = LineString([(ts.true_e, ts.true_n), (cp.true_e, cp.true_n)])
+                in_corridor = corridor_poly.buffer(1e-3).contains(los_line)
+                if enforce_corridor_los and not in_corridor:
+                    continue
+
+                sig_d = (sigma_dist_mm * 1e-3) + (sigma_dist_ppm * 1e-6 * true_dist)
+                sig_dir = np.deg2rad(sigma_dir_arcsec / 3600.0)
+
+                obs_dist = true_dist + self.rng.normal(0.0, sig_d)
+                obs_dir = (true_dir + self.rng.normal(0.0, sig_dir)) % (2.0 * np.pi)
+
+                if idx_t == 0:
+                    first_obs_dir = obs_dir
+
+                for o_type, t_val, o_val, sig in [
+                    ("DIR_2D", true_dir, obs_dir, sig_dir),
+                    ("DIST_2D", true_dist, obs_dist, sig_d),
+                ]:
+                    obs_records.append({
+                        "obs_type": o_type,
+                        "link_kind": "TS_CTRL",
+                        "from_stn": ts.station_id,
+                        "to_stn": cp.station_id,
+                        "true_val": t_val,
+                        "obs_val": o_val,
+                        "sigma": sig,
+                        "in_corridor": in_corridor,
+                        "geometry": los_line
+                    })
+
+            # 2. Direct backsight (TS_{n-1}) and foresight (TS_{n+1}) observations from TS_n
+            if link_consecutive_ts:
+                neighbor_indices = []
+                if ts_idx - 1 >= 0:
+                    neighbor_indices.append(ts_idx - 1)
+                if ts_idx + 1 < len(ts_rows):
+                    neighbor_indices.append(ts_idx + 1)
+
+                for adj_idx in neighbor_indices:
+                    adj_ts = ts_rows[adj_idx]
+                    de = adj_ts.true_e - ts.true_e
+                    dn = adj_ts.true_n - ts.true_n
+                    true_dist = np.hypot(de, dn)
+                    true_az = np.arctan2(de, dn) % (2.0 * np.pi)
+                    true_dir = (true_az - z0_true) % (2.0 * np.pi)
+
+                    los_line = LineString([(ts.true_e, ts.true_n), (adj_ts.true_e, adj_ts.true_n)])
+                    in_corridor = corridor_poly.buffer(1e-3).contains(los_line)
+                    if enforce_corridor_los and not in_corridor:
+                        continue
+
+                    sig_d = (sigma_dist_mm * 1e-3) + (sigma_dist_ppm * 1e-6 * true_dist)
+                    sig_dir = np.deg2rad(sigma_dir_arcsec / 3600.0)
+
+                    obs_dist = true_dist + self.rng.normal(0.0, sig_d)
+                    obs_dir = (true_dir + self.rng.normal(0.0, sig_dir)) % (2.0 * np.pi)
+
+                    for o_type, t_val, o_val, sig in [
+                        ("DIR_2D", true_dir, obs_dir, sig_dir),
+                        ("DIST_2D", true_dist, obs_dist, sig_d),
+                    ]:
+                        obs_records.append({
+                            "obs_type": o_type,
+                            "link_kind": "TS_TS",
+                            "from_stn": ts.station_id,
+                            "to_stn": adj_ts.station_id,
+                            "true_val": t_val,
+                            "obs_val": o_val,
+                            "sigma": sig,
+                            "in_corridor": in_corridor,
+                            "geometry": los_line
+                        })
+
+            if first_obs_dir is not None:
+                self.params[f"{ts.station_id}_Z0"].value = (approx_az0 - first_obs_dir) % (2.0 * np.pi)
+
+            # 3. Gyro-Theodolite Azimuth Observations (active only when USE_GYRO=True)
+            if ts.has_gyro and gyro_az_to > 0:
+                bs_targets = nearest_targets[nearest_targets["chainage"] < ts.chainage]
+                fs_targets = nearest_targets[nearest_targets["chainage"] > ts.chainage]
+                gyro_targets = pd.concat([bs_targets.head(1), fs_targets.head(1)]).head(gyro_az_to)
+                if len(gyro_targets) < gyro_az_to:
+                    gyro_targets = nearest_targets.head(gyro_az_to)
+
+                sig_gyro = np.deg2rad(sigma_gyro_arcsec / 3600.0)
+                for cp in gyro_targets.itertuples():
+                    de = cp.true_e - ts.true_e
+                    dn = cp.true_n - ts.true_n
+                    true_az = np.arctan2(de, dn) % (2.0 * np.pi)
+                    los_line = LineString([(ts.true_e, ts.true_n), (cp.true_e, cp.true_n)])
+                    in_corridor = corridor_poly.buffer(1e-3).contains(los_line)
+                    if enforce_corridor_los and not in_corridor:
+                        continue
+
+                    obs_gyro_az = (true_az + self.rng.normal(0.0, sig_gyro)) % (2.0 * np.pi)
+                    obs_records.append({
+                        "obs_type": "GYRO_AZ",
+                        "link_kind": "GYRO_CTRL",
+                        "from_stn": ts.station_id,
+                        "to_stn": cp.station_id,
+                        "true_val": true_az,
+                        "obs_val": obs_gyro_az,
+                        "sigma": sig_gyro,
+                        "in_corridor": in_corridor,
+                        "geometry": los_line
+                    })
+
+        self.observations_gdf = gpd.GeoDataFrame(obs_records, geometry="geometry", crs=self.crs)
+
+    @property
+    def datum_defect(self) -> int:
+        """Datum defect is 2 (E, N translations) if Gyro-Azimuths exist, else 3 (E, N, Rotation)."""
+        return 2 if self.has_gyro else 3
+
+    def _inner_constraint_residuals(self, vals: Dict[str, float]) -> np.ndarray:
+        """
+        Inner datum constraints:
+          - Always includes E and N centroid translations (2 constraints).
+          - Includes network rotation constraint ONLY when USE_GYRO=False (no Gyro-Azimuths).
+        """
+        stn_ids = self.stations_gdf["station_id"].tolist()
+        e_curr = np.array([vals[f"{s}_E"] for s in stn_ids])
+        n_curr = np.array([vals[f"{s}_N"] for s in stn_ids])
+
+        e0 = self.stations_gdf["approx_e"].to_numpy()
+        n0 = self.stations_gdf["approx_n"].to_numpy()
+        de = e_curr - e0
+        dn = n_curr - n0
+
+        c_trans_e = np.sum(de) / INNER_CONSTRAINT_SIGMA
+        c_trans_n = np.sum(dn) / INNER_CONSTRAINT_SIGMA
+
+        if self.has_gyro:
+            return np.array([c_trans_e, c_trans_n], dtype=float)
+
+        e0_bar = e0 - np.mean(e0)
+        n0_bar = n0 - np.mean(n0)
+        scale_r = np.hypot(e0_bar, n0_bar).mean()
+        c_rot = (np.sum(n0_bar * de - e0_bar * dn) / scale_r) / INNER_CONSTRAINT_SIGMA
+        return np.array([c_trans_e, c_trans_n, c_rot], dtype=float)
+
+    def _residuals(self, params: lmfit.Parameters) -> np.ndarray:
+        """Evaluates standardized observation residuals + inner datum constraint residuals."""
+        vals = params.valuesdict()
+        from_stns = self.observations_gdf["from_stn"].tolist()
+        to_stns = self.observations_gdf["to_stn"].tolist()
+
+        e1 = np.array([vals[f"{s}_E"] for s in from_stns])
+        n1 = np.array([vals[f"{s}_N"] for s in from_stns])
+        e2 = np.array([vals[f"{s}_E"] for s in to_stns])
+        n2 = np.array([vals[f"{s}_N"] for s in to_stns])
+
+        de = e2 - e1
+        dn = n2 - n1
+        obs_types = self.observations_gdf["obs_type"].to_numpy()
+        obs_vals = self.observations_gdf["obs_val"].to_numpy()
+        sigmas = self.observations_gdf["sigma"].to_numpy()
+
+        res = np.empty_like(obs_vals)
+        is_dist = (obs_types == "DIST_2D")
+        is_dir = (obs_types == "DIR_2D")
+        is_gyro = (obs_types == "GYRO_AZ")
+
+        res[is_dist] = (obs_vals[is_dist] - np.hypot(de[is_dist], dn[is_dist])) / sigmas[is_dist]
+
+        z0_from = np.array([vals[f"{s}_Z0"] for s in np.array(from_stns)[is_dir]])
+        az_calc_dir = np.arctan2(de[is_dir], dn[is_dir]) % (2.0 * np.pi)
+        dir_calc = (az_calc_dir - z0_from) % (2.0 * np.pi)
+        dir_diff = (obs_vals[is_dir] - dir_calc + np.pi) % (2.0 * np.pi) - np.pi
+        res[is_dir] = dir_diff / sigmas[is_dir]
+
+        if np.any(is_gyro):
+            az_calc_gyro = np.arctan2(de[is_gyro], dn[is_gyro]) % (2.0 * np.pi)
+            gyro_diff = (obs_vals[is_gyro] - az_calc_gyro + np.pi) % (2.0 * np.pi) - np.pi
+            res[is_gyro] = gyro_diff / sigmas[is_gyro]
+
+        datum_res = self._inner_constraint_residuals(vals)
+        return np.concatenate([res, datum_res])
+
+    def _analytical_jacobian(self, params: lmfit.Parameters) -> np.ndarray:
+        """Exact analytical Jacobian for DIST_2D, DIR_2D, GYRO_AZ, and inner datum constraints."""
+        vary_names = [name for name, par in params.items() if par.vary]
+        col_map = {name: idx for idx, name in enumerate(vary_names)}
+        vals = params.valuesdict()
+
+        n_obs = len(self.observations_gdf)
+        n_datum = self.datum_defect
+        jac = np.zeros((n_obs + n_datum, len(vary_names)), dtype=float)
+
+        for row_idx, obs in enumerate(self.observations_gdf.itertuples()):
+            de = vals[f"{obs.to_stn}_E"] - vals[f"{obs.from_stn}_E"]
+            dn = vals[f"{obs.to_stn}_N"] - vals[f"{obs.from_stn}_N"]
+            inv_sig = 1.0 / obs.sigma
+
+            if obs.obs_type == "DIST_2D":
+                s_calc = np.hypot(de, dn)
+                d_e, d_n = de / s_calc, dn / s_calc
+            elif obs.obs_type == "DIR_2D":
+                s_sq = de**2 + dn**2
+                d_e, d_n = dn / s_sq, -de / s_sq
+                jac[row_idx, col_map[f"{obs.from_stn}_Z0"]] = inv_sig
+            else:  # GYRO_AZ
+                s_sq = de**2 + dn**2
+                d_e, d_n = dn / s_sq, -de / s_sq
+
+            jac[row_idx, col_map[f"{obs.from_stn}_E"]] = inv_sig * d_e
+            jac[row_idx, col_map[f"{obs.from_stn}_N"]] = inv_sig * d_n
+            jac[row_idx, col_map[f"{obs.to_stn}_E"]] = -inv_sig * d_e
+            jac[row_idx, col_map[f"{obs.to_stn}_N"]] = -inv_sig * d_n
+
+        e0 = self.stations_gdf["approx_e"].to_numpy()
+        n0 = self.stations_gdf["approx_n"].to_numpy()
+        e0_bar = e0 - np.mean(e0)
+        n0_bar = n0 - np.mean(n0)
+        scale_r = np.hypot(e0_bar, n0_bar).mean()
+
+        for i, stn_id in enumerate(self.stations_gdf["station_id"]):
+            c_e = col_map[f"{stn_id}_E"]
+            c_n = col_map[f"{stn_id}_N"]
+            jac[n_obs + 0, c_e] = 1.0 / INNER_CONSTRAINT_SIGMA
+            jac[n_obs + 1, c_n] = 1.0 / INNER_CONSTRAINT_SIGMA
+            if not self.has_gyro:
+                jac[n_obs + 2, c_e] = (n0_bar[i] / scale_r) / INNER_CONSTRAINT_SIGMA
+                jac[n_obs + 2, c_n] = (-e0_bar[i] / scale_r) / INNER_CONSTRAINT_SIGMA
+
+        return jac
+
+    def adjust(
+        self,
+        ellipse_exaggeration: float = ELLIPSE_EXAGGERATION,
+        conf_level: float = CONFIDENCE_LEVEL,
+        alpha: float = SIGNIFICANCE_ALPHA,
+        use_analytical_jac: bool = True
+    ) -> lmfit.minimizer.MinimizerResult:
+        """Runs Free-Network WLS adjustment and computes inner-constraint error ellipses."""
+        if self.observations_gdf is None or len(self.observations_gdf) == 0:
+            raise RuntimeError("No valid observations available for adjustment.")
+
+        minimizer = lmfit.Minimizer(self._residuals, self.params, scale_covar=True)
+        jac_fn = self._analytical_jacobian if use_analytical_jac else None
+        self.result = minimizer.minimize(method="leastsq", Dfun=jac_fn)
+
+        n_obs = len(self.observations_gdf)
+        dof = self.result.nfree
+        obs_std_res = self.result.residual[:n_obs]
+        vTPv = float(np.sum(obs_std_res ** 2))
+        post_sigma0 = float(np.sqrt(vTPv / dof))
+
+        chi2_low = float(chi2.ppf(alpha / 2.0, dof))
+        chi2_high = float(chi2.ppf(1.0 - alpha / 2.0, dof))
+
+        self.stats = {
+            "use_gyro": self.has_gyro,
+            "link_ts": self.link_ts,
+            "n_obs": n_obs,
+            "n_ts_link_obs": int((self.observations_gdf["link_kind"] == "TS_TS").sum()),
+            "n_gyro_obs": int((self.observations_gdf["obs_type"] == "GYRO_AZ").sum()),
+            "n_params": self.result.nvarys,
+            "datum_defect": self.datum_defect,
+            "dof": dof,
+            "vTPv": vTPv,
+            "post_sigma0": post_sigma0,
+            "chi2_bounds": (chi2_low, chi2_high),
+            "global_test_passed": chi2_low <= vTPv <= chi2_high
+        }
+
+        w_crit = norm.ppf(1.0 - BAARDA_ALPHA_0 / 2.0)
+        self.observations_gdf["std_residual"] = obs_std_res
+        self.observations_gdf["residual"] = obs_std_res * self.observations_gdf["sigma"]
+        self.observations_gdf["outlier_flag"] = np.abs(obs_std_res) > w_crit
+
+        vals = self.result.params.valuesdict()
+        self.stations_gdf["adj_e"] = [vals[f"{s}_E"] for s in self.stations_gdf["station_id"]]
+        self.stations_gdf["adj_n"] = [vals[f"{s}_N"] for s in self.stations_gdf["station_id"]]
+        self.stations_gdf["err_e_mm"] = (self.stations_gdf["adj_e"] - self.stations_gdf["true_e"]) * 1000.0
+        self.stations_gdf["err_n_mm"] = (self.stations_gdf["adj_n"] - self.stations_gdf["true_n"]) * 1000.0
+        self.stations_gdf["geometry"] = gpd.points_from_xy(
+            self.stations_gdf["adj_e"], self.stations_gdf["adj_n"]
+        )
+
+        var_names = self.result.var_names
+        conf_scale = float(np.sqrt(chi2.ppf(conf_level, df=2)))
+        ellipse_records = []
+
+        for row in self.stations_gdf.itertuples():
+            idx_e = var_names.index(f"{row.station_id}_E")
+            idx_n = var_names.index(f"{row.station_id}_N")
+            cov_2x2 = self.result.covar[np.ix_([idx_e, idx_n], [idx_e, idx_n])]
+
+            eigvals, eigvecs = np.linalg.eigh(cov_2x2)
+            order = eigvals.argsort()[::-1]
+            eigvals, eigvecs = eigvals[order], eigvecs[:, order]
+
+            a = conf_scale * np.sqrt(max(eigvals[0], 0.0))
+            b = conf_scale * np.sqrt(max(eigvals[1], 0.0))
+            angle_ccw_east_deg = np.rad2deg(np.arctan2(eigvecs[1, 0], eigvecs[0, 0]))
+            az_deg = (90.0 - angle_ccw_east_deg) % 180.0
+
+            unit_circle = Point(row.adj_e, row.adj_n).buffer(1.0, resolution=64)
+            scaled_ell = scale(unit_circle, xfact=a * ellipse_exaggeration, yfact=b * ellipse_exaggeration)
+            rot_ell = rotate(scaled_ell, angle=angle_ccw_east_deg, origin=(row.adj_e, row.adj_n))
+
+            ellipse_records.append({
+                "station_id": row.station_id,
+                "role": row.role,
+                "has_gyro": row.has_gyro,
+                "chainage": row.chainage,
+                "a_mm": a * 1000.0,
+                "b_mm": b * 1000.0,
+                "az_deg": az_deg,
+                "exaggeration": ellipse_exaggeration,
+                "geometry": rot_ell
+            })
+
+        self.ellipses_gdf = gpd.GeoDataFrame(ellipse_records, geometry="geometry", crs=self.crs)
+        return self.result
+
+    # ==========================================================================
+    # 3. Export Network to GNU Gama (gama-local) Inner-Constraint XML
+    # ==========================================================================
+
+    def export_gama_xml(
+        self,
+        xml_path: str,
+        conf_level: float = CONFIDENCE_LEVEL
+    ) -> None:
+        """
+        Exports all simulated stations and observations to a GNU Gama (`gama-local`)
+        2D inner-constraint XML file (`adj="XY"`), ready to execute via:
+          gama-local <xml_path> --algorithm svd --text out.txt --xml out.xml --svg out.svg
+        """
+        if self.stations_gdf is None or self.observations_gdf is None:
+            raise RuntimeError("Simulate observations before exporting GNU Gama XML.")
+
+        out_file = Path(xml_path)
+        out_file.parent.mkdir(parents=True, exist_ok=True)
+
+        GAMA_NS = "http://www.gnu.org/software/gama/gama-local"
+        root = ET.Element("gama-local", xmlns=GAMA_NS)
+
+        # GNU Gama XML structure: <gama-local> contains <network> directly.
+        # axes-xy="ne": x=Northing, y=Easting; left-handed: clockwise azimuths.
+        network = ET.SubElement(
+            root, "network",
+            {"axes-xy": "ne", "angles": "left-handed"}
+        )
+
+        desc = ET.SubElement(network, "description")
+        desc.text = (
+            f"2D Free-Network Tunnel Simulation ({self.alignment_name.upper()}, "
+            f"{self.num_spans} spans @ {self.ctrl_spac}m, "
+            f"TS-Link={self.link_ts}, Gyro={self.has_gyro})"
+        )
+
+        # Only GNU Gama <parameters> options belong here.
+        # In particular, update-constrained-coordinates is not supported.
+        ET.SubElement(
+            network, "parameters",
+            {
+                "sigma-apr": "1.0",
+                "conf-pr": f"{conf_level:.2f}",
+                "tol-abs": "1000.0",
+                "sigma-act": "aposteriori",
+            }
+        )
+
+        # Default observation precision belongs to <points-observations>.
+        pts_obs = ET.SubElement(
+            network, "points-observations",
+            {
+                "direction-stdev": f"{self.sigma_dir_arcsec:.4f}",
+                "angle-stdev": f"{self.sigma_dir_arcsec * np.sqrt(2.0):.4f}",
+                "distance-stdev": f"{self.sigma_dist_mm:.4f} {self.sigma_dist_ppm:.4f} 1.0",
+            }
+        )
+
+        # 1. All points marked adj="XY" (uppercase) for full inner-constraint datum
+        # In Gama with axes-xy="ne", x corresponds to Northing and y corresponds to Easting
+        for row in self.stations_gdf.sort_values(["chainage", "role", "station_id"]).itertuples():
+            ET.SubElement(
+                pts_obs, "point",
+                {
+                    "id": str(row.station_id),
+                    "x": f"{row.approx_n:.6f}",
+                    "y": f"{row.approx_e:.6f}",
+                    "adj": "XY"
+                }
+            )
+
+        # 2. Group observations by setup station (`from_stn`) inside <obs from="...">
+        grouped = self.observations_gdf.groupby("from_stn", sort=False)
+        for from_stn, grp in grouped:
+            obs_block = ET.SubElement(pts_obs, "obs", {"from": str(from_stn)})
+
+            # Horizontal directions (tied to common orientation unknown Z0 at `from_stn`)
+            for row in grp[grp["obs_type"] == "DIR_2D"].itertuples():
+                stdev_arcsec = np.rad2deg(row.sigma) * 3600.0
+                ET.SubElement(
+                    obs_block, "direction",
+                    {
+                        "to": str(row.to_stn),
+                        "val": rad_to_gama_dms(row.obs_val),
+                        "stdev": f"{stdev_arcsec:.4f}"
+                    }
+                )
+
+            # Horizontal distances (val in meters, stdev in millimeters per Gama convention)
+            for row in grp[grp["obs_type"] == "DIST_2D"].itertuples():
+                stdev_mm = row.sigma * 1000.0
+                ET.SubElement(
+                    obs_block, "distance",
+                    {
+                        "to": str(row.to_stn),
+                        "val": f"{row.obs_val:.6f}",
+                        "stdev": f"{stdev_mm:.4f}"
+                    }
+                )
+
+            # Gyro-Theodolite grid azimuths (oriented directions)
+            for row in grp[grp["obs_type"] == "GYRO_AZ"].itertuples():
+                stdev_arcsec = np.rad2deg(row.sigma) * 3600.0
+                ET.SubElement(
+                    obs_block, "azimuth",
+                    {
+                        "to": str(row.to_stn),
+                        "val": rad_to_gama_dms(row.obs_val),
+                        "stdev": f"{stdev_arcsec:.4f}"
+                    }
+                )
+
+        # Structural validation adapted from refactor_gama_xml.py.
+        # Check all references BEFORE writing an output file.
+        valid_parameters = {
+            "sigma-apr", "conf-pr", "tol-abs", "sigma-act", "algorithm",
+            "language", "encoding", "angular", "latitude", "ellipsoid", "cov-band",
+        }
+        valid_observations = {"direction", "distance", "angle", "azimuth", "s-distance", "z-angle"}
+        if list(root) != [network]:
+            raise ValueError("GNU Gama XML must have exactly one <network> under <gama-local>.")
+        if not set(network.find("parameters").attrib).issubset(valid_parameters):
+            raise ValueError("Unsupported GNU Gama <parameters> attribute.")
+        all_ids = [point.get("id") for point in pts_obs.findall("point")]
+        if len(set(all_ids)) != len(all_ids):
+            raise ValueError("Duplicate GNU Gama point IDs.")
+        known_ids = set(all_ids)
+        for group in pts_obs.findall("obs"):
+            station = group.get("from")
+            if station not in known_ids:
+                raise ValueError(f"Unknown GNU Gama observation station: {station}")
+            for measurement in group:
+                if measurement.tag not in valid_observations:
+                    raise ValueError(f"Unsupported GNU Gama observation: {measurement.tag}")
+                target = measurement.get("to")
+                if target not in known_ids:
+                    raise ValueError(f"Unknown GNU Gama observation target: {station} -> {target}")
+                if not measurement.get("val") or not measurement.get("stdev"):
+                    raise ValueError(f"GNU Gama observation missing value or precision: {station} -> {target}")
+
+        rough_xml = ET.tostring(root, encoding="utf-8")
+        pretty_xml = minidom.parseString(rough_xml).toprettyxml(indent="  ", encoding="utf-8")
+        # Verify the serialized XML before writing it to disk.
+        verified = ET.fromstring(pretty_xml)
+        if verified.find(f"{{{GAMA_NS}}}network/{{{GAMA_NS}}}points-observations") is None:
+            raise ValueError("Serialized GNU Gama XML is missing <points-observations>.")
+        out_file.write_bytes(pretty_xml)
+
+    def export_station_csv(self, csv_path: str) -> Path:
+        """Write all TS_* and CP_* coordinates, including lmfit-adjusted E/N, to CSV.
+
+        Geometry uses the simulation CRS; the adjusted coordinates are meaningful
+        relative to the free-network datum defined by approximate coordinates.
+        """
+        if self.stations_gdf is None:
+            raise RuntimeError("Call build_corridor_topology() before exporting stations.")
+        if "adj_e" not in self.stations_gdf or "adj_n" not in self.stations_gdf:
+            raise RuntimeError("Call adjust() before exporting adjusted coordinates.")
+
+        stations = self.stations_gdf.loc[
+            self.stations_gdf["station_id"].str.startswith(("TS_", "CP_"))
+        ].copy()
+        columns = [
+            "station_id", "role", "has_gyro", "chainage", "offset",
+            "true_e", "true_n", "approx_e", "approx_n",
+            "adj_e", "adj_n", "err_e_mm", "err_n_mm"
+        ]
+        stations = stations.sort_values(["chainage", "station_id"])
+        output = Path(csv_path)
+        output.parent.mkdir(parents=True, exist_ok=True)
+        stations[columns].to_csv(output, index=False, float_format="%.6f")
+        print(f"[CSV] Wrote {len(stations)} TS/CP stations: {output}", flush=True)
+        return output
+
+    @staticmethod
+    def run_gama_svd(xml_path: str, gama_bin: str = "gama-local") -> subprocess.CompletedProcess:
+        """Invoke GNU Gama's SVD adjustment; capture output in the XML directory."""
+        xml_file = Path(xml_path).resolve()
+        if not xml_file.is_file():
+            raise FileNotFoundError(f"Gama input XML not found: {xml_file}")
+        executable = shutil.which(gama_bin)
+        if executable is None:
+            raise FileNotFoundError(
+                f"GNU Gama executable {gama_bin!r} not found on PATH; install GNU Gama "
+                "or specify --gama-bin /path/to/gama-local"
+            )
+        prefix = xml_file.with_suffix("")
+        text_file = prefix.with_name(prefix.name + "_svd.txt")
+        result_xml = prefix.with_name(prefix.name + "_svd_result.xml")
+        svg_file = prefix.with_name(prefix.name + "_svd.svg")
+        log_file = prefix.with_name(prefix.name + "_svd.log")
+        cmd = [
+            executable, str(xml_file), "--algorithm", "svd",
+            "--angular", "360", "--text", str(text_file),
+            "--xml", str(result_xml), "--svg", str(svg_file)
+        ]
+        print("[GAMA] $ " + shlex.join(cmd), flush=True)
+        try:
+            result = subprocess.run(cmd, text=True, stdout=subprocess.PIPE,
+                                    stderr=subprocess.STDOUT, check=False)
+        except OSError as exc:
+            raise RuntimeError(f"Unable to start gama-local: {exc}") from exc
+        log_file.write_text(result.stdout or "", encoding="utf-8")
+        if result.stdout:
+            print(result.stdout, end="" if result.stdout.endswith("\n") else "\n", flush=True)
+        print(f"[GAMA] Exit code: {result.returncode}; log: {log_file}", flush=True)
+        if result.returncode != 0:
+            raise RuntimeError(f"gama-local SVD failed (exit {result.returncode}); see {log_file}")
+        print(f"[GAMA] Results: {text_file}, {result_xml}, {svg_file}", flush=True)
+        return result
+
+    # ==========================================================================
+    # 4. Export Network Diagrams (PNG & SVG) with Exact TS/CP Extent Margins
+    # ==========================================================================
+
+    def plot_network(
+        self,
+        png_path: str,
+        svg_path: str,
+        zoom_stations: Optional[int] = PLOT_ZOOM_STATIONS
+    ) -> None:
+        """
+        Renders brown tunnel walls, thin red TS->CTRL rays, navy reciprocal TS<->TS legs,
+        optional green Gyro rays, and 95% ellipses.
+        """
+        if self.result is None or self.ellipses_gdf is None:
+            raise RuntimeError("Call adjust() before plot_network().")
+
+        Path(png_path).parent.mkdir(parents=True, exist_ok=True)
+        Path(svg_path).parent.mkdir(parents=True, exist_ok=True)
+
+        fig, ax = plt.subplots(figsize=(16, 7), dpi=300)
+
+        # 1. Tunnel Interior & Thick Brown Tunnel Walls
+        boundary = self.corridor_gdf[self.corridor_gdf["feature"] == "corridor_boundary"]
+        walls = self.corridor_gdf[self.corridor_gdf["feature"].isin(["left_wall", "right_wall"])]
+        centerline = self.corridor_gdf[self.corridor_gdf["feature"] == "centerline"]
+
+        boundary.plot(ax=ax, color=TUNNEL_FILL_COLOR, edgecolor="none", alpha=0.55, zorder=1)
+        walls.plot(
+            ax=ax, color=TUNNEL_WALL_COLOR, linewidth=TUNNEL_WALL_LW,
+            capstyle="round", zorder=2, label=f"Tunnel Walls (Width={self.wid_cor} m)"
+        )
+        centerline.plot(ax=ax, color="#7f8c8d", linestyle="--", linewidth=0.8, alpha=0.7, zorder=2)
+
+        # 2a. Thin Red TS -> Control Measurement Rays
+        ts_ctrl_lines = self.observations_gdf[
+            self.observations_gdf["link_kind"] == "TS_CTRL"
+        ].drop_duplicates(subset=["from_stn", "to_stn"])
+        ts_ctrl_lines.plot(
+            ax=ax, color=MEAS_RAY_COLOR, linewidth=MEAS_RAY_LW, alpha=0.85, zorder=3,
+            label=f"TS -> Control Rays (4 targets: ±{self.sigma_dist_mm}mm, ±{self.sigma_dir_arcsec}\")"
+        )
+
+        # 2b. Reciprocal TS_{n-1} <-> TS_n <-> TS_{n+1} Traverse Legs
+        ts_ts_raw = self.observations_gdf[self.observations_gdf["link_kind"] == "TS_TS"].copy()
+        if len(ts_ts_raw) > 0:
+            ts_ts_raw["_pair"] = [frozenset((a, b)) for a, b in zip(ts_ts_raw["from_stn"], ts_ts_raw["to_stn"])]
+            ts_ts_lines = ts_ts_raw.drop_duplicates(subset=["_pair"])
+            ts_ts_lines.plot(
+                ax=ax, color=TS_LINK_COLOR, linestyle="-.", linewidth=TS_LINK_LW, alpha=0.9, zorder=3,
+                label="TS_{n-1} <-> TS_n <-> TS_{n+1} Reciprocal Tie (1 dir + 1 dist each)"
+            )
+
+        # 3. Green Gyro-Theodolite Azimuth Rays (only when USE_GYRO=True)
+        gyro_lines = self.observations_gdf[self.observations_gdf["obs_type"] == "GYRO_AZ"]
+        if len(gyro_lines) > 0:
+            gyro_lines.plot(
+                ax=ax, color=GYRO_RAY_COLOR, linewidth=GYRO_RAY_LW, alpha=0.95, zorder=4,
+                label=f"Gyro-Azimuth Rays (Every {self.gyro_every} TS, {self.gyro_az_to} dirs, ±{self.sigma_gyro_arcsec}\")"
+            )
+
+        # 4. 95% Confidence Error Ellipses
+        exag = int(self.ellipses_gdf["exaggeration"].iloc[0])
+        ctrl_ell = self.ellipses_gdf[self.ellipses_gdf["role"] == "CTRL"]
+        ts_ell = self.ellipses_gdf[self.ellipses_gdf["role"] == "TS"]
+
+        ctrl_ell.plot(
+            ax=ax, facecolor="#9b59b6", edgecolor="#6c3483", linewidth=1.2, alpha=0.25, zorder=5
+        )
+        ts_ell.plot(
+            ax=ax, facecolor="#f39c12", edgecolor="#d35400", linewidth=1.3, alpha=0.38, zorder=5
+        )
+
+        # 5. Stations (CTRL, Standard TS, and optional Gyro-TS)
+        ctrl_gdf = self.stations_gdf[self.stations_gdf["role"] == "CTRL"]
+        ts_plain_gdf = self.stations_gdf[(self.stations_gdf["role"] == "TS") & (~self.stations_gdf["has_gyro"])]
+        ts_gyro_gdf = self.stations_gdf[(self.stations_gdf["role"] == "TS") & (self.stations_gdf["has_gyro"])]
+
+        ctrl_gdf.plot(
+            ax=ax, marker="^", markersize=75, color="#8e44ad", edgecolor="black", zorder=6,
+            label=f"Control Target ({int(self.ctrl_spac)}m) + 95% Ellipse (×{exag})"
+        )
+        if len(ts_plain_gdf) > 0:
+            ts_plain_gdf.plot(
+                ax=ax, marker="o", markersize=60, color="#2980b9", edgecolor="black", zorder=7,
+                label=f"Total Station Setup (@ {int(self.ctrl_spac / 2)}m) + 95% Ellipse (×{exag})"
+            )
+        if len(ts_gyro_gdf) > 0:
+            ts_gyro_gdf.plot(
+                ax=ax, marker="D", markersize=85, color=GYRO_MARKER_COLOR, edgecolor="black", zorder=8,
+                label=f"TS + Gyro-Theodolite Setup (Every {self.gyro_every} TS)"
+            )
+
+        zoom_ids = set()
+        if zoom_stations is not None and zoom_stations > 0:
+            target_stns = self.stations_gdf.sort_values(by=["chainage", "station_id"]).head(zoom_stations)
+            zoom_ids = set(target_stns["station_id"])
+            zoom_tag = f" | ZOOM: First {len(zoom_ids)} Stations"
+        else:
+            target_stns = self.stations_gdf
+            zoom_tag = ""
+
+        label_step = 1 if zoom_ids else max(1, self.num_spans // 15)
+        for idx, row in enumerate(ctrl_gdf.itertuples()):
+            if (zoom_ids and row.station_id in zoom_ids) or (not zoom_ids and (idx // 2) % label_step == 0):
+                ax.annotate(
+                    row.station_id, (row.adj_e, row.adj_n), textcoords="offset points",
+                    xytext=(0, 8), ha="center", fontsize=7.5, fontweight="bold", color="#5b2c6f"
+                )
+        for idx, row in enumerate(self.stations_gdf[self.stations_gdf["role"] == "TS"].itertuples()):
+            if (zoom_ids and row.station_id in zoom_ids) or (not zoom_ids and (row.has_gyro or idx % label_step == 0)):
+                lbl = f"{row.station_id} [GYRO]" if row.has_gyro else row.station_id
+                clr = "#145a32" if row.has_gyro else "#1f618d"
+                ax.annotate(
+                    lbl, (row.adj_e, row.adj_n), textcoords="offset points",
+                    xytext=(0, -13), ha="center", fontsize=8.0, fontweight="bold", color=clr
+                )
+
+        minx, miny, maxx, maxy = target_stns.total_bounds
+        span_x = max(maxx - minx, 1e-3)
+        span_y = max(maxy - miny, 1e-3)
+
+        pad_x = 0.5 * X_EXTENT_PAD_FRAC * span_x
+        pad_y = 0.5 * Y_EXTENT_PAD_FRAC * span_y
+
+        ax.set_aspect("auto")
+        ax.set_xlim(minx - pad_x, maxx + pad_x)
+        ax.set_ylim(miny - pad_y, maxy + pad_y)
+
+        gyro_tag = f"WITH GYRO (Every {self.gyro_every} TS)" if self.has_gyro else "NO GYRO"
+        link_tag = "TS<->TS RECIPROCAL" if self.link_ts else "NO TS->TS LINK"
+        ax.set_xlabel("Easting (m)", fontsize=10)
+        ax.set_ylabel("Northing (m)", fontsize=10)
+        ax.set_title(
+            f"Free-Network 2D Tunnel Adjustment [{self.alignment_name.upper()} | {link_tag} | {gyro_tag}{zoom_tag} | "
+            f"DOF={self.stats['dof']}, Post σ₀={self.stats['post_sigma0']:.3f}]",
+            fontsize=10.5, fontweight="bold"
+        )
+        ax.grid(True, linestyle=":", alpha=0.45)
+        ax.legend(loc="upper left", fontsize=8.0, framealpha=0.94)
+        plt.tight_layout()
+
+        # Overwrite existing files cleanly
+        fig.savefig(png_path, format="png", dpi=300)
+        fig.savefig(svg_path, format="svg")
+        plt.close(fig)
+
+    # ==========================================================================
+    # 5. Summary & Full Tabular Report
+    # ==========================================================================
+
+    def print_summary(self) -> None:
+        """Always-shown concise adjustment summary and 95% error ellipse statistics."""
+        mode_str = f"WITH GYRO (Every {self.gyro_every} TS)" if self.has_gyro else "WITHOUT GYRO (Pure TS Free Network)"
+        link_str = "WITH Reciprocal TS_{n-1}<->TS_n<->TS_{n+1} Tie" if self.link_ts else "WITHOUT TS-TS Tie"
+        print(f"Adjustment Summary ({self.alignment_name.upper()} Alignment - {mode_str} | {link_str}):")
+        print(f"  Total Obs: {self.stats['n_obs']} (TS-TS Tie Obs: {self.stats['n_ts_link_obs']}, "
+              f"Gyro Obs: {self.stats['n_gyro_obs']}) | "
+              f"Free Params: {self.stats['n_params']} (Datum Defect={self.stats['datum_defect']}) | "
+              f"DOF: {self.stats['dof']}")
+        print(f"  vTPv: {self.stats['vTPv']:.3f} | Post σ₀: {self.stats['post_sigma0']:.4f} | "
+              f"Chi2 Test Passed: {self.stats['global_test_passed']}")
+
+        print("\n--- Max & Mean 95% Error Ellipse Semi-Major/Minor Axes (mm) ---")
+        summary_ell = self.ellipses_gdf.groupby(["role", "has_gyro"])[["a_mm", "b_mm"]].agg(["mean", "max"])
+        print(summary_ell.to_string())
+
+    def print_station_tables(self) -> None:
+        """Verbose station-by-station report of coordinates & 95% error ellipses for ALL TS and CTRL points."""
+        full_df = self.stations_gdf[
+            ["role", "has_gyro", "chainage", "offset", "adj_e", "adj_n", "err_e_mm", "err_n_mm"]
+        ].join(self.ellipses_gdf.set_index("station_id")[["a_mm", "b_mm", "az_deg"]])
+        full_df = full_df.sort_values(by=["chainage", "role", "station_id"])
+
+        print("\n--- Adjusted Coordinates & 95% Error Ellipses (ALL Total Station Setups) ---")
+        ts_report = full_df[full_df["role"] == "TS"].drop(columns=["role"])
+        print(ts_report.to_string())
+
+        print("\n--- Adjusted Coordinates & 95% Error Ellipses (ALL Control Points) ---")
+        ctrl_report = full_df[full_df["role"] == "CTRL"].drop(columns=["role", "has_gyro"])
+        print(ctrl_report.to_string())
+
+
+# ==============================================================================
+# 6. CLI Argument Parsing & Execution Entry Point
+# ==============================================================================
+
+def parse_args() -> argparse.Namespace:
+    parser = argparse.ArgumentParser(
+        description="2D Free-Network Tunnel Control Simulator & WLS Adjustment (TS + Reciprocal TS-Link + Optional Gyro)"
+    )
+    parser.add_argument(
+        "-a", "--alignment",
+        choices=["straight", "curvy", "zigzag"],
+        default=ALIGNMENT_TYPE,
+        help=f"Tunnel alignment geometry (default: {ALIGNMENT_TYPE})"
+    )
+    parser.add_argument(
+        "-n", "--spans",
+        type=int,
+        default=NUM_SPANS,
+        help=f"Number of corridor spans (default: {NUM_SPANS})"
+    )
+    parser.add_argument(
+        "--wid-cor",
+        type=float,
+        default=WID_COR_M,
+        help=f"Tunnel width in meters (default: {WID_COR_M})"
+    )
+    parser.add_argument(
+        "--ctrl-spac",
+        type=float,
+        default=CTRL_SPAC_M,
+        help=f"Control station pair spacing in meters (default: {CTRL_SPAC_M})"
+    )
+    parser.add_argument(
+        "--link-ts",
+        action=argparse.BooleanOptionalAction,
+        default=LINK_CONSECUTIVE_TS,
+        help=f"Observe 1 dir + 1 dist from TS_n to both TS_{{n-1}} and TS_{{n+1}} (default: {LINK_CONSECUTIVE_TS})"
+    )
+    parser.add_argument(
+        "--use-gyro",
+        action=argparse.BooleanOptionalAction,
+        default=USE_GYRO,
+        help=f"Enable or disable Gyro-Theodolite observations (default: {USE_GYRO})"
+    )
+    parser.add_argument(
+        "--gyro-every",
+        type=int,
+        default=GYRO_EVERY,
+        help=f"Deploy Gyro-Theodolite every N-th TS setup (default: {GYRO_EVERY})"
+    )
+    parser.add_argument(
+        "--sigma-gyro",
+        type=float,
+        default=SIGMA_GYRO_AZ_ARCSEC,
+        help=f"Gyro-Azimuth accuracy in arcseconds (default: {SIGMA_GYRO_AZ_ARCSEC})"
+    )
+    parser.add_argument(
+        "--exag",
+        type=float,
+        default=ELLIPSE_EXAGGERATION,
+        help=f"Visual exaggeration factor for 95%% error ellipses (default: {ELLIPSE_EXAGGERATION})"
+    )
+    parser.add_argument(
+        "-z", "--zoom-stations",
+        type=int,
+        default=PLOT_ZOOM_STATIONS,
+        help="Zoom plot to the first N stations along chainage (e.g., -z 10; default: full corridor)"
+    )
+    parser.add_argument(
+        "--out-dir",
+        default=OUTPUT_DIR,
+        help=f"Output folder (created/overwritten automatically, default: {OUTPUT_DIR})"
+    )
+    parser.add_argument(
+        "--png",
+        default=OUTPUT_PNG,
+        help=f"Output PNG filename inside --out-dir (default: {OUTPUT_PNG})"
+    )
+    parser.add_argument(
+        "--svg",
+        default=OUTPUT_SVG,
+        help=f"Output SVG filename inside --out-dir (default: {OUTPUT_SVG})"
+    )
+    parser.add_argument(
+        "--gama-xml",
+        default=OUTPUT_GAMA_XML,
+        help=f"Output GNU Gama XML filename inside --out-dir (default: {OUTPUT_GAMA_XML})"
+    )
+    parser.add_argument(
+        "--csv", default=OUTPUT_COORD_CSV,
+        help=f"Station coordinates CSV inside --out-dir (default: {OUTPUT_COORD_CSV})"
+    )
+    parser.add_argument(
+        "--run-gama", action=argparse.BooleanOptionalAction, default=False,
+        help="Run gama-local SVD adjustment after XML export (default: disabled)"
+    )
+    parser.add_argument(
+        "--gama-bin", default="gama-local",
+        help="GNU Gama executable or path (default: gama-local)"
+    )
+    parser.add_argument(
+        "-v", "--verbose",
+        action="store_true",
+        default=False,
+        help="Also print full station-by-station coordinate & error ellipse tables for all TS and CTRL stations"
+    )
+    return parser.parse_args()
+
+
+if __name__ == "__main__":
+    args = parse_args()
+
+    # Always ensure RESULT_SIM directory exists
+    out_dir = Path(args.out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+
+    png_out = str(out_dir / Path(args.png).name)
+    svg_out = str(out_dir / Path(args.svg).name)
+    gama_xml_out = str(out_dir / Path(args.gama_xml).name)
+    csv_out = str(out_dir / Path(args.csv).name)
+
+    alignment = get_alignment_strategy(args.alignment)
+
+    sim = CorridorFreeNetworkSim(
+        alignment=alignment,
+        alignment_name=args.alignment,
+        wid_cor=args.wid_cor,
+        ctrl_spac=args.ctrl_spac,
+        crs=CRS_EPSG,
+        seed=RANDOM_SEED
+    )
+
+    sim.build_corridor_topology(
+        num_spans=args.spans,
+        use_gyro=args.use_gyro,
+        gyro_every=args.gyro_every,
+        approx_noise_m=APPROX_COORD_NOISE_M
+    )
+    sim.simulate_observations(
+        k_nearest=NEAREST_K_TARGETS,
+        link_consecutive_ts=args.link_ts,
+        sigma_dir_arcsec=SIGMA_DIR_ARCSEC,
+        sigma_dist_mm=SIGMA_DIST_MM,
+        sigma_dist_ppm=SIGMA_DIST_PPM,
+        gyro_az_to=GYRO_AZ_TO,
+        sigma_gyro_arcsec=args.sigma_gyro,
+        enforce_corridor_los=False
+    )
+
+    # Export GNU Gama inner-constraint XML before/independently of lmfit adjustment
+    sim.export_gama_xml(xml_path=gama_xml_out, conf_level=CONFIDENCE_LEVEL)
+
+    sim.adjust(
+        ellipse_exaggeration=args.exag,
+        conf_level=CONFIDENCE_LEVEL,
+        alpha=SIGNIFICANCE_ALPHA,
+        use_analytical_jac=True
+    )
+
+    sim.export_station_csv(csv_out)
+
+    sim.plot_network(
+        png_path=png_out,
+        svg_path=svg_out,
+        zoom_stations=args.zoom_stations
+    )
+
+    print(f"Saved outputs to '{out_dir}/':")
+    print(f"  - {png_out}")
+    print(f"  - {svg_out}")
+    print(f"  - {gama_xml_out}")
+    print(f"  - {csv_out}\n")
+
+    if args.run_gama:
+        sim.run_gama_svd(gama_xml_out, gama_bin=args.gama_bin)
+
+    sim.print_summary()
+
+    if args.verbose:
+        sim.print_station_tables()

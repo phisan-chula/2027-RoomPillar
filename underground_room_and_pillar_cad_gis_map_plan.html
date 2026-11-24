@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>SubSurface CAD/GIS — Underground Room & Pillar Mine Plan</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+  <script>
+    tailwind.config = {
+      darkMode: 'class',
+      theme: {
+        extend: {
+          fontFamily: {
+            sans: ['Inter', 'sans-serif'],
+            mono: ['JetBrains Mono', 'monospace'],
+          },
+          colors: {
+            cad: {
+              bg: '#0b0f17',
+              panel: '#111827',
+              card: '#1a2234',
+              border: '#273248',
+              accent: '#38bdf8',
+              amber: '#f59e0b',
+              emerald: '#10b981',
+              rose: '#f43f5e'
+            }
+          }
+        }
+      }
+    }
+  </script>
+  <style>
+    * { box-sizing: border-box; }
+    body, html {
+      margin: 0;
+      padding: 0;
+      width: 100%;
+      height: 100%;
+      overflow: hidden;
+      background-color: #0b0f17;
+      color: #e2e8f0;
+      user-select: none;
+    }
+    /* Custom subtle scrollbars for CAD sidebar */
+    ::-webkit-scrollbar { width: 5px; height: 5px; }
+    ::-webkit-scrollbar-track { background: #0f172a; }
+    ::-webkit-scrollbar-thumb { background: #334155; border-radius: 3px; }
+    ::-webkit-scrollbar-thumb:hover { background: #475569; }
+    input[type="range"] {
+      -webkit-appearance: none;
+      background: #1e293b;
+      height: 5px;
+      border-radius: 3px;
+      outline: none;
+    }
+    input[type="range"]::-webkit-slider-thumb {
+      -webkit-appearance: none;
+      width: 14px;
+      height: 14px;
+      border-radius: 50%;
+      background: #38bdf8;
+      cursor: pointer;
+      border: 2px solid #0f172a;
+      box-shadow: 0 0 6px rgba(56, 189, 248, 0.5);
+    }
+    canvas {
+      touch-action: none;
+    }
+  </style>
+</head>
+<body class="flex flex-col md:flex-row h-screen w-screen overflow-hidden font-sans">
+
+  <!-- LEFT ENGINEERING CAD/GIS SIDEBAR -->
+  <aside id="sidebar" class="w-full md:w-[375px] lg:w-[400px] h-[46vh] md:h-full bg-cad-panel border-b md:border-b-0 md:border-r border-cad-border flex flex-col z-20 shrink-0 shadow-2xl">
+    
+    <!-- Header -->
+    <div class="px-4 py-3 border-b border-cad-border bg-[#0d1320] flex items-center justify-between shrink-0">
+      <div class="flex items-center gap-2.5">
+        <div class="w-8 h-8 rounded bg-sky-500/15 border border-sky-400/40 flex items-center justify-center text-sky-400">
+          <svg class="w-4 h-4" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M4 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1V5zM14 5a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1V5zM4 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1H5a1 1 0 01-1-1v-4zM14 15a1 1 0 011-1h4a1 1 0 011 1v4a1 1 0 01-1 1h-4a1 1 0 01-1-1v-4z"/>
+          </svg>
+        </div>
+        <div>
+          <div class="flex items-center gap-2">
+            <h1 class="text-sm font-bold tracking-wide text-slate-100">SUBSURFACE CAD/GIS</h1>
+            <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-500/15 text-emerald-400 border border-emerald-500/30">MINE PLAN</span>
+          </div>
+          <p class="text-[11px] text-slate-400">Room-and-Pillar Underground Layout</p>
+        </div>
+      </div>
+      <button id="btnResetSpec" title="Reset to 5x5 km Spec" class="px-2.5 py-1.5 rounded bg-slate-800 hover:bg-slate-700 active:bg-slate-600 text-[11px] font-medium text-sky-300 border border-slate-700 transition flex items-center gap-1 cursor-pointer">
+        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+        </svg>
+        <span>5×5 km Spec</span>
+      </button>
+    </div>
+
+    <!-- Scrollable Controls & Metrics -->
+    <div class="flex-1 overflow-y-auto p-3.5 space-y-4">
+
+      <!-- 1. GEOMETRY PARAMETERS -->
+      <section class="bg-cad-card/80 border border-cad-border rounded-lg p-3 space-y-3">
+        <div class="flex items-center justify-between">
+          <h2 class="text-[11px] font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-sky-400"></span>
+            Grid Design Parameters
+          </h2>
+          <span id="badgePitch" class="text-[11px] font-mono text-sky-400 font-semibold">Pitch P = 23 m</span>
+        </div>
+
+        <!-- Domain Size -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <label for="sliderDomain" class="text-slate-300">Domain Size (<span class="font-mono text-slate-400">L × L</span>)</label>
+            <div class="flex items-center gap-1 font-mono text-xs">
+              <input id="inputDomain" type="number" min="1000" max="10000" step="100" value="5000" class="w-16 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-right text-sky-300 focus:outline-none focus:border-sky-400" />
+              <span class="text-slate-400">m</span>
+            </div>
+          </div>
+          <input id="sliderDomain" type="range" min="1000" max="10000" step="100" value="5000" class="w-full" />
+          <div class="flex justify-between text-[10px] font-mono text-slate-500">
+            <span>1 km</span>
+            <span id="labelDomainKm" class="text-slate-400">5.00 km × 5.00 km (25.00 km²)</span>
+            <span>10 km</span>
+          </div>
+        </div>
+
+        <!-- Pillar Width W_p -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <label for="sliderPillar" class="text-slate-300">Pillar Width (<span class="font-mono text-slate-400">W<sub>p</sub></span>)</label>
+            <div class="flex items-center gap-1 font-mono text-xs">
+              <input id="inputPillar" type="number" min="5" max="50" step="1" value="15" class="w-14 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-right text-amber-300 focus:outline-none focus:border-amber-400" />
+              <span class="text-slate-400">m</span>
+            </div>
+          </div>
+          <input id="sliderPillar" type="range" min="5" max="50" step="1" value="15" class="w-full" />
+        </div>
+
+        <!-- Corridor / Room Width W_c -->
+        <div class="space-y-1">
+          <div class="flex justify-between text-xs">
+            <label for="sliderCorridor" class="text-slate-300">Corridor / Room Width (<span class="font-mono text-slate-400">W<sub>c</sub></span>)</label>
+            <div class="flex items-center gap-1 font-mono text-xs">
+              <input id="inputCorridor" type="number" min="4" max="20" step="0.5" value="8" class="w-14 bg-slate-900 border border-slate-700 rounded px-1.5 py-0.5 text-right text-emerald-300 focus:outline-none focus:border-emerald-400" />
+              <span class="text-slate-400">m</span>
+            </div>
+          </div>
+          <input id="sliderCorridor" type="range" min="4" max="20" step="0.5" value="8" class="w-full" />
+        </div>
+      </section>
+
+      <!-- 2. CALCULATED GRID METRICS (EXACT FORMULAS) -->
+      <section class="bg-cad-card/80 border border-cad-border rounded-lg p-3 space-y-2.5">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-1.5">
+          <h2 class="text-[11px] font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+            <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+            Grid Metrics (<span id="metricsHeaderDim" class="font-mono text-slate-200">5 km × 5 km</span>)
+          </h2>
+          <span class="text-[10px] font-mono text-slate-500">LIVE</span>
+        </div>
+
+        <!-- Metric Cards -->
+        <div class="space-y-2 text-xs">
+          <!-- Unit Cell Pitch -->
+          <div class="bg-slate-900/80 border border-slate-800/90 rounded p-2">
+            <div class="flex justify-between items-baseline">
+              <span class="text-slate-400 font-medium">Unit Cell Pitch (P)</span>
+              <span id="valPitch" class="font-mono font-bold text-sky-400 text-sm">23 m</span>
+            </div>
+            <div id="formulaPitch" class="font-mono text-[10px] text-slate-500 mt-0.5">15 m (pillar) + 8 m (corridor) = 23 m</div>
+          </div>
+
+          <!-- Grid Cells per Axis -->
+          <div class="bg-slate-900/80 border border-slate-800/90 rounded p-2">
+            <div class="flex justify-between items-baseline">
+              <span class="text-slate-400 font-medium">Grid Cells per Axis</span>
+              <span id="valCellsAxis" class="font-mono font-bold text-slate-100 text-sm">217.39 cells</span>
+            </div>
+            <div id="formulaCellsAxis" class="font-mono text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+              5,000 m / 23 m ≈ 217.39 cells (217 × 217 = 47,089 full pillars, with a 9 m edge remainder)
+            </div>
+          </div>
+
+          <!-- Areal Extraction Ratio -->
+          <div class="bg-slate-900/80 border border-slate-800/90 rounded p-2">
+            <div class="flex justify-between items-baseline">
+              <span class="text-slate-400 font-medium">Areal Extraction Ratio</span>
+              <span id="valExtraction" class="font-mono font-bold text-emerald-400 text-sm">57.47%</span>
+            </div>
+            <div id="formulaExtraction" class="font-mono text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+              1 − (15 m / 23 m)² = 57.47% (14.37 km² excavated, 10.63 km² intact pillars)
+            </div>
+            <!-- Mini Extraction Bar -->
+            <div class="w-full h-1.5 bg-amber-500/30 rounded-full overflow-hidden mt-1.5 flex">
+              <div id="barExcavated" class="bg-emerald-400 h-full transition-all duration-150" style="width: 57.47%"></div>
+            </div>
+          </div>
+
+          <!-- Total Centerline Length -->
+          <div class="bg-slate-900/80 border border-slate-800/90 rounded p-2">
+            <div class="flex justify-between items-baseline">
+              <span class="text-slate-400 font-medium">Total Centerline Length</span>
+              <span id="valCenterline" class="font-mono font-bold text-indigo-300 text-sm">2,173.91 km</span>
+            </div>
+            <div id="formulaCenterline" class="font-mono text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+              2 × 217.39 × 5 km = 2,173.91 km (1,086.96 km N–S + 1,086.96 km E–W)
+            </div>
+          </div>
+
+          <!-- Net Non-Overlapping Corridor Length -->
+          <div class="bg-slate-900/80 border border-slate-800/90 rounded p-2">
+            <div class="flex justify-between items-baseline">
+              <span class="text-slate-400 font-medium">Net Non-Overlapping Length</span>
+              <span id="valNetLength" class="font-mono font-bold text-amber-300 text-sm">1,795.84 km</span>
+            </div>
+            <div id="formulaNetLength" class="font-mono text-[10px] text-slate-400 mt-0.5 leading-relaxed">
+              14.37 km² / 0.008 km = 1,795.84 km
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- 3. CAD / GIS LAYER CONTROLS -->
+      <section class="bg-cad-card/80 border border-cad-border rounded-lg p-3 space-y-2">
+        <h2 class="text-[11px] font-semibold uppercase tracking-wider text-slate-300 flex items-center gap-1.5">
+          <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+          CAD / GIS Layer Manager
+        </h2>
+
+        <div class="grid grid-cols-1 gap-1.5 text-xs">
+          <label class="flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-slate-800 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-amber-500/40 border border-amber-400 inline-block"></span>
+              <span>Intact Pillars (<span id="lblLayerPillar">15×15 m</span>)</span>
+            </span>
+            <input type="checkbox" id="layerPillars" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-slate-800 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-slate-800 border border-slate-500 inline-block"></span>
+              <span>Excavated Corridors (<span id="lblLayerCorridor">8 m</span>)</span>
+            </span>
+            <input type="checkbox" id="layerCorridors" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-slate-800 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <span class="w-3 h-0.5 border-t border-dashed border-cyan-400 inline-block"></span>
+              <span>Corridor Centerlines (N–S & E–W)</span>
+            </span>
+            <input type="checkbox" id="layerCenterlines" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-slate-800 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm bg-rose-500/35 border border-rose-400 inline-block"></span>
+              <span>Edge Remainder Zone (<span id="lblLayerRem">9 m</span>)</span>
+            </span>
+            <input type="checkbox" id="layerRemainder" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-slate-800 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-sm border border-sky-400 text-[8px] font-mono text-sky-300 flex items-center justify-center">↔</span>
+              <span>Dimension Callouts & Unit Cell</span>
+            </span>
+            <input type="checkbox" id="layerDimensions" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer" />
+          </label>
+
+          <label class="flex items-center justify-between px-2 py-1.5 rounded bg-slate-900/70 hover:bg-slate-900 border border-slate-800 cursor-pointer">
+            <span class="flex items-center gap-2">
+              <span class="w-3 h-3 rounded-full border border-emerald-400 flex items-center justify-center text-[8px] text-emerald-400">▲</span>
+              <span>Survey Control Traverse & Gyro</span>
+            </span>
+            <input type="checkbox" id="layerSurvey" checked class="accent-sky-400 w-3.5 h-3.5 rounded cursor-pointer" />
+          </label>
+        </div>
+      </section>
+
+    </div>
+  </aside>
+
+  <!-- RIGHT INTERACTIVE CAD/GIS CANVAS VIEWPORT -->
+  <main id="viewportContainer" class="relative flex-1 h-[54vh] md:h-full bg-[#070b12] overflow-hidden">
+    <!-- Main HTML5 Canvas -->
+    <canvas id="cadCanvas" class="w-full h-full block cursor-crosshair"></canvas>
+
+    <!-- TOP TOOLBAR: VIEW PRESETS & TOOLS -->
+    <div class="absolute top-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+      
+      <!-- View Presets -->
+      <div class="flex flex-wrap items-center gap-1.5 bg-cad-panel/90 backdrop-blur-md border border-cad-border p-1.5 rounded-lg shadow-xl pointer-events-auto">
+        <span class="text-[10px] font-mono uppercase text-slate-400 px-1.5 hidden sm:inline">Presets:</span>
+        <button data-preset="overview" class="preset-btn px-2.5 py-1 rounded text-xs font-medium bg-sky-500/20 text-sky-300 border border-sky-500/40 hover:bg-sky-500/30 transition cursor-pointer">
+          Full 5×5 km Overview
+        </button>
+        <button data-preset="sw" class="preset-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-800/90 text-slate-300 border border-slate-700 hover:bg-slate-700 transition cursor-pointer">
+          SW Origin (0,0)
+        </button>
+        <button data-preset="ne" class="preset-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-800/90 text-rose-300 border border-slate-700 hover:bg-slate-700 transition cursor-pointer">
+          NE Remainder (<span id="btnRemLabel">9 m</span>)
+        </button>
+        <button data-preset="unit" class="preset-btn px-2.5 py-1 rounded text-xs font-medium bg-slate-800/90 text-amber-300 border border-slate-700 hover:bg-slate-700 transition cursor-pointer">
+          Unit Cell (<span id="btnUnitLabel">23×23 m</span>)
+        </button>
+      </div>
+
+      <!-- Interactive Tools (Measure & Zoom) -->
+      <div class="flex items-center gap-1.5 bg-cad-panel/90 backdrop-blur-md border border-cad-border p-1.5 rounded-lg shadow-xl pointer-events-auto">
+        <button id="btnMeasureTool" title="Click two points on plan to measure distance & azimuth" class="px-2.5 py-1 rounded text-xs font-medium bg-slate-800 text-slate-200 border border-slate-700 hover:bg-slate-700 transition flex items-center gap-1.5 cursor-pointer">
+          <svg class="w-3.5 h-3.5 text-emerald-400" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" d="M3 17l6-6 4 4 8-8M14 7h7v7"/>
+          </svg>
+          <span id="measureBtnText">Measure</span>
+        </button>
+        <button id="btnClearMeasure" title="Clear Measurement" class="hidden px-2 py-1 rounded text-xs font-medium bg-rose-500/20 text-rose-300 border border-rose-500/40 hover:bg-rose-500/30 transition cursor-pointer">
+          Clear
+        </button>
+        <div class="h-4 w-[1px] bg-slate-700 mx-0.5"></div>
+        <button id="btnZoomIn" title="Zoom In (+)" class="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center font-mono text-sm cursor-pointer">+</button>
+        <button id="btnZoomOut" title="Zoom Out (-)" class="w-7 h-7 rounded bg-slate-800 hover:bg-slate-700 text-slate-200 border border-slate-700 flex items-center justify-center font-mono text-sm cursor-pointer">−</button>
+      </div>
+    </div>
+
+    <!-- MEASURE RESULT BANNER (Floating when active) -->
+    <div id="measureBanner" class="hidden absolute top-16 left-3 bg-slate-900/95 backdrop-blur border border-emerald-500/50 rounded-lg px-3 py-2 text-xs font-mono shadow-xl pointer-events-none">
+      <div class="flex items-center gap-2 text-emerald-400 font-semibold mb-0.5">
+        <span>📐 SURVEY TAPE / EDM MEASUREMENT</span>
+      </div>
+      <div id="measureReadout" class="text-slate-200">Click Point A on the plan...</div>
+    </div>
+
+    <!-- MINIMAP INSET (Top-Right below toolbar on desktop) -->
+    <div id="minimapWrapper" class="hidden sm:flex flex-col absolute top-16 right-3 bg-cad-panel/90 backdrop-blur-md border border-cad-border rounded-lg p-2 shadow-2xl pointer-events-auto">
+      <div class="flex items-center justify-between text-[10px] font-mono text-slate-400 mb-1">
+        <span>MACRO OVERVIEW</span>
+        <span id="minimapScaleText" class="text-sky-400">1:25,000</span>
+      </div>
+      <canvas id="minimapCanvas" width="150" height="150" class="rounded border border-slate-700 cursor-pointer bg-[#070b12]"></canvas>
+      <div class="flex justify-between text-[9px] font-mono text-slate-500 mt-1">
+        <span>0 m</span>
+        <span id="minimapDomainLabel">5,000 m</span>
+      </div>
+    </div>
+
+    <!-- BOTTOM LIVE COORDINATE & FEATURE INSPECTION HUD -->
+    <div class="absolute bottom-3 left-3 right-3 flex flex-wrap items-center justify-between gap-2 bg-cad-panel/92 backdrop-blur-md border border-cad-border px-3.5 py-2 rounded-lg shadow-2xl text-xs font-mono pointer-events-none">
+      
+      <!-- Easting / Northing Coordinates -->
+      <div class="flex flex-wrap items-center gap-3 sm:gap-5">
+        <div>
+          <span class="text-slate-500">E (X):</span>
+          <span id="hudEasting" class="text-sky-300 font-semibold">2,500.00 m</span>
+        </div>
+        <div>
+          <span class="text-slate-500">N (Y):</span>
+          <span id="hudNorthing" class="text-sky-300 font-semibold">2,500.00 m</span>
+        </div>
+        <div class="hidden lg:block">
+          <span class="text-slate-500">CELL [Col, Row]:</span>
+          <span id="hudCellIdx" class="text-slate-200">[108, 108]</span>
+        </div>
+      </div>
+
+      <!-- Feature Classification Pill & Zoom Level -->
+      <div class="flex items-center gap-3">
+        <span id="hudFeatureBadge" class="px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40">
+          INTACT PILLAR
+        </span>
+        <span id="hudZoom" class="text-slate-400 text-[11px] hidden sm:inline">
+          Scale: 0.15 px/m
+        </span>
+      </div>
+    </div>
+
+  </main>
+
+  <script>
+    /**
+     * ============================================================================
+     * SUBSURFACE CAD/GIS — UNDERGROUND ROOM & PILLAR MINE PLAN ENGINE
+     * ============================================================================
+     * Coordinate Convention (Standard Surveying / GIS Right-Handed Plan):
+     *   - Origin (0, 0) at South-West (bottom-left) corner of the mining lease.
+     *   - +X = Easting (0 to Domain L)
+     *   - +Y = Northing (0 to Domain L)
+     *   - Unit Cell [col, row] starts at (col * P, row * P):
+     *       * Intact Pillar occupies [col*P, col*P + W_p] x [row*P, row*P + W_p]
+     *       * E-W Corridor occupies [col*P, (col+1)*P] x [row*P + W_p, (row+1)*P]
+     *       * N-S Corridor occupies [col*P + W_p, (col+1)*P] x [row*P, (row+1)*P]
+     *       * Edge Remainder occupies x in [N_full * P, L] and y in [N_full * P, L]
+     * ============================================================================
+     */
+
+    // --- 1. APPLICATION STATE ---
+    const state = {
+      domain: 5000,      // Domain length L in meters (default 5000 m)
+      pillarW: 15,       // Intact pillar width W_p in meters (default 15 m)
+      corridorW: 8,      // Corridor / room width W_c in meters (default 8 m)
+
+      // Viewport Camera State (World coordinates in meters at center of screen)
+      camX: 2500,
+      camY: 2500,
+      scale: 0.14,       // Pixels per meter (px/m)
+
+      // Layer Toggles
+      layers: {
+        pillars: true,
+        corridors: true,
+        centerlines: true,
+        remainder: true,
+        dimensions: true,
+        survey: true
+      },
+
+      // Pointer & Interaction State
+      isDragging: false,
+      dragStartX: 0,
+      dragStartY: 0,
+      camStartX: 0,
+      camStartY: 0,
+      mouseScreenX: 0,
+      mouseScreenY: 0,
+      mouseWorldX: 2500,
+      mouseWorldY: 2500,
+
+      // Measurement Tool State
+      measureMode: false,
+      measurePtA: null,
+      measurePtB: null,
+
+      // Cached Hatch Pattern for Rock/Potash Pillars
+      hatchPattern: null
+    };
+
+    // Derived Engineering Metrics
+    let metrics = {};
+
+    // --- 2. DOM ELEMENTS ---
+    const canvas = document.getElementById('cadCanvas');
+    const ctx = canvas.getContext('2d');
+    const minimapCanvas = document.getElementById('minimapCanvas');
+    const mctx = minimapCanvas.getContext('2d');
+    const viewportContainer = document.getElementById('viewportContainer');
+
+    // Controls
+    const sliderDomain = document.getElementById('sliderDomain');
+    const inputDomain = document.getElementById('inputDomain');
+    const sliderPillar = document.getElementById('sliderPillar');
+    const inputPillar = document.getElementById('inputPillar');
+    const sliderCorridor = document.getElementById('sliderCorridor');
+    const inputCorridor = document.getElementById('inputCorridor');
+
+    // --- 3. ENGINEERING METRICS CALCULATION ---
+    function computeMetrics() {
+      const L = state.domain;
+      const Wp = state.pillarW;
+      const Wc = state.corridorW;
+      const P = Wp + Wc;
+
+      const cellsPerAxis = L / P;
+      const fullCells = Math.floor(cellsPerAxis);
+      const totalFullPillars = fullCells * fullCells;
+      const remainderM = L - fullCells * P;
+
+      // Areal Extraction Ratio: 1 - (Wp / P)^2
+      const pillarRatio = Wp / P;
+      const extractionRatio = 1 - (pillarRatio * pillarRatio);
+      const extractionPct = extractionRatio * 100;
+
+      const totalAreaKm2 = (L * L) / 1e6;
+      const excavatedAreaKm2 = totalAreaKm2 * extractionRatio;
+      const pillarAreaKm2 = totalAreaKm2 - excavatedAreaKm2;
+
+      // Total Centerline Length: 2 * (L / P) * L (in km)
+      const domainKm = L / 1000;
+      const singleAxisCenterlineKm = cellsPerAxis * domainKm;
+      const totalCenterlineKm = 2 * singleAxisCenterlineKm;
+
+      // Net Non-Overlapping Corridor Length: Excavated Area (km²) / Wc (km)
+      const corridorWidthKm = Wc / 1000;
+      const netNonOverlappingKm = excavatedAreaKm2 / corridorWidthKm;
+
+      metrics = {
+        L, Wp, Wc, P,
+        cellsPerAxis,
+        fullCells,
+        totalFullPillars,
+        remainderM,
+        extractionRatio,
+        extractionPct,
+        totalAreaKm2,
+        excavatedAreaKm2,
+        pillarAreaKm2,
+        domainKm,
+        singleAxisCenterlineKm,
+        totalCenterlineKm,
+        corridorWidthKm,
+        netNonOverlappingKm
+      };
+
+      updateSidebarUI();
+    }
+
+    function fmtNum(num, decimals = 2) {
+      return num.toLocaleString('en-US', {
+        minimumFractionDigits: decimals,
+        maximumFractionDigits: decimals
+      });
+    }
+
+    function fmtInt(num) {
+      return Math.round(num).toLocaleString('en-US');
+    }
+
+    function updateSidebarUI() {
+      const m = metrics;
+      const remDisplay = Number.isInteger(m.remainderM) ? fmtInt(m.remainderM) : fmtNum(m.remainderM, 2);
+
+      document.getElementById('badgePitch').textContent = `Pitch P = ${m.P} m`;
+      document.getElementById('labelDomainKm').textContent = `${fmtNum(m.domainKm, 2)} km × ${fmtNum(m.domainKm, 2)} km (${fmtNum(m.totalAreaKm2, 2)} km²)`;
+      document.getElementById('metricsHeaderDim').textContent = `${Number.isInteger(m.domainKm) ? m.domainKm : fmtNum(m.domainKm, 2)} km × ${Number.isInteger(m.domainKm) ? m.domainKm : fmtNum(m.domainKm, 2)} km`;
+
+      // Pitch
+      document.getElementById('valPitch').textContent = `${m.P} m`;
+      document.getElementById('formulaPitch').textContent = `${m.Wp} m (pillar) + ${m.Wc} m (corridor) = ${m.P} m`;
+
+      // Grid Cells per Axis
+      document.getElementById('valCellsAxis').textContent = `${fmtNum(m.cellsPerAxis, 2)} cells`;
+      document.getElementById('formulaCellsAxis').textContent =
+        `${fmtInt(m.L)} m / ${m.P} m ≈ ${fmtNum(m.cellsPerAxis, 2)} cells (${fmtInt(m.fullCells)} × ${fmtInt(m.fullCells)} = ${fmtInt(m.totalFullPillars)} full pillars, with a ${remDisplay} m edge remainder)`;
+
+      // Areal Extraction Ratio
+      document.getElementById('valExtraction').textContent = `${fmtNum(m.extractionPct, 2)}%`;
+      document.getElementById('formulaExtraction').textContent =
+        `1 − (${m.Wp} m / ${m.P} m)² = ${fmtNum(m.extractionPct, 2)}% (${fmtNum(m.excavatedAreaKm2, 2)} km² excavated, ${fmtNum(m.pillarAreaKm2, 2)} km² intact pillars)`;
+      document.getElementById('barExcavated').style.width = `${Math.min(100, Math.max(0, m.extractionPct))}%`;
+
+      // Total Centerline Length
+      document.getElementById('valCenterline').textContent = `${fmtNum(m.totalCenterlineKm, 2)} km`;
+      document.getElementById('formulaCenterline').textContent =
+        `2 × ${fmtNum(m.cellsPerAxis, 2)} × ${Number.isInteger(m.domainKm) ? m.domainKm : fmtNum(m.domainKm, 2)} km = ${fmtNum(m.totalCenterlineKm, 2)} km (${fmtNum(m.singleAxisCenterlineKm, 2)} km N–S + ${fmtNum(m.singleAxisCenterlineKm, 2)} km E–W)`;
+
+      // Net Non-Overlapping Corridor Length
+      document.getElementById('valNetLength').textContent = `${fmtNum(m.netNonOverlappingKm, 2)} km`;
+      document.getElementById('formulaNetLength').textContent =
+        `${fmtNum(m.excavatedAreaKm2, 2)} km² / ${m.corridorWidthKm.toFixed(3)} km = ${fmtNum(m.netNonOverlappingKm, 2)} km`;
+
+      // Layer & Preset Labels
+      document.getElementById('lblLayerPillar').textContent = `${m.Wp}×${m.Wp} m`;
+      document.getElementById('lblLayerCorridor').textContent = `${m.Wc} m`;
+      document.getElementById('lblLayerRem').textContent = `${remDisplay} m`;
+      document.getElementById('btnRemLabel').textContent = `${remDisplay} m`;
+      document.getElementById('btnUnitLabel').textContent = `${m.P}×${m.P} m`;
+      document.getElementById('minimapDomainLabel').textContent = `${fmtInt(m.L)} m`;
+    }
+
+    // --- 4. HATCH PATTERN FOR ROCK / POTASH PILLARS ---
+    function createHatchPattern() {
+      const pCanvas = document.createElement('canvas');
+      pCanvas.width = 16;
+      pCanvas.height = 16;
+      const pCtx = pCanvas.getContext('2d');
+      pCtx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
+      pCtx.lineWidth = 1;
+      pCtx.beginPath();
+      pCtx.moveTo(0, 16);
+      pCtx.lineTo(16, 0);
+      pCtx.moveTo(-4, 4);
+      pCtx.lineTo(4, -4);
+      pCtx.moveTo(12, 20);
+      pCtx.lineTo(20, 12);
+      pCtx.stroke();
+      state.hatchPattern = ctx.createPattern(pCanvas, 'repeat');
+    }
+
+    // --- 5. COORDINATE TRANSFORMS ---
+    function worldToScreen(wx, wy) {
+      const rect = canvas.getBoundingClientRect();
+      const sx = (wx - state.camX) * state.scale + rect.width / 2;
+      const sy = rect.height / 2 - (wy - state.camY) * state.scale; // +Y North is Up
+      return { x: sx, y: sy };
+    }
+
+    function screenToWorld(sx, sy) {
+      const rect = canvas.getBoundingClientRect();
+      const wx = (sx - rect.width / 2) / state.scale + state.camX;
+      const wy = state.camY - (sy - rect.height / 2) / state.scale;
+      return { x: wx, y: wy };
+    }
+
+    // --- 6. VIEWPORT RESIZING ---
+    function resizeCanvas() {
+      const dpr = window.devicePixelRatio || 1;
+      const rect = viewportContainer.getBoundingClientRect();
+      canvas.width = rect.width * dpr;
+      canvas.height = rect.height * dpr;
+      ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+      requestRender();
+    }
+
+    // --- 7. VIEW PRESETS ---
+    function applyPreset(presetName) {
+      const rect = viewportContainer.getBoundingClientRect();
+      const minDim = Math.min(rect.width, rect.height);
+      const L = metrics.L;
+      const P = metrics.P;
+      const fullBoundary = metrics.fullCells * P;
+
+      if (presetName === 'overview') {
+        state.camX = L / 2;
+        state.camY = L / 2;
+        state.scale = (minDim * 0.80) / L;
+      } else if (presetName === 'sw') {
+        // SW Origin (0,0) showing first 4x4 unit cells clearly
+        state.camX = P * 2.2;
+        state.camY = P * 2.2;
+        state.scale = minDim / (P * 5.2);
+      } else if (presetName === 'ne') {
+        // NE Edge Remainder Zone where fullCells * P meets Domain L
+        state.camX = fullBoundary - P * 0.6;
+        state.camY = fullBoundary - P * 0.6;
+        state.scale = minDim / (P * 3.2);
+      } else if (presetName === 'unit') {
+        // Single Unit Cell (P x P) centered around cell [1, 1]
+        state.camX = P * 1.5;
+        state.camY = P * 1.5;
+        state.scale = minDim / (P * 1.65);
+      }
+      requestRender();
+    }
+
+    // --- 8. MULTI-SCALE CAD/GIS RENDERING PIPELINE ---
+    let renderPending = false;
+    function requestRender() {
+      if (!renderPending) {
+        renderPending = true;
+        requestAnimationFrame(() => {
+          renderPending = false;
+          render();
+        });
+      }
+    }
+
+    function render() {
+      const rect = viewportContainer.getBoundingClientRect();
+      const W = rect.width;
+      const H = rect.height;
+      const { L, Wp, Wc, P, fullCells, remainderM } = metrics;
+      const fullSpan = fullCells * P;
+
+      // Clear background
+      ctx.fillStyle = '#070b12';
+      ctx.fillRect(0, 0, W, H);
+
+      // Compute visible world bounds
+      const topLeft = screenToWorld(0, 0);
+      const bottomRight = screenToWorld(W, H);
+      const minX = Math.max(0, topLeft.x);
+      const maxX = Math.min(L, bottomRight.x);
+      const minY = Math.max(0, bottomRight.y);
+      const maxY = Math.min(L, topLeft.y);
+
+      const pitchPx = P * state.scale;
+      const pillarPx = Wp * state.scale;
+      const corridorPx = Wc * state.scale;
+
+      // 8A. OUTER LEASE BOUNDARY & EXCAVATED BASE FLOOR
+      const swScr = worldToScreen(0, 0);
+      const neScr = worldToScreen(L, L);
+      const domainWScr = neScr.x - swScr.x;
+      const domainHScr = swScr.y - neScr.y;
+
+      if (state.layers.corridors) {
+        ctx.fillStyle = '#111827'; // Dark slate excavated floor
+        ctx.fillRect(swScr.x, neScr.y, domainWScr, domainHScr);
+      } else {
+        ctx.fillStyle = '#0b101b';
+        ctx.fillRect(swScr.x, neScr.y, domainWScr, domainHScr);
+      }
+
+      // 8B. MULTI-SCALE LEVEL-OF-DETAIL RENDERING OF PILLARS & CORRIDORS
+      if (maxX > minX && maxY > minY) {
+        if (pitchPx < 3.2) {
+          // --- MACRO LOD: High-speed continuous density / sub-sampled grid ---
+          // Renders aggregate rock/void visual tone + structural block lines without frame drops
+          if (state.layers.pillars) {
+            const pillarFraction = (Wp * Wp) / (P * P);
+            ctx.fillStyle = `rgba(217, 119, 6, ${0.18 + pillarFraction * 0.42})`;
+            const fullNeScr = worldToScreen(fullSpan, fullSpan);
+            ctx.fillRect(swScr.x, fullNeScr.y, fullNeScr.x - swScr.x, swScr.y - fullNeScr.y);
+
+            // Sub-sampled macro grid lines every N cells so user sees the orthogonal weave
+            const stepCells = Math.max(1, Math.ceil(4 / pitchPx));
+            const stepM = stepCells * P;
+            ctx.strokeStyle = 'rgba(245, 158, 11, 0.22)';
+            ctx.lineWidth = 1;
+            ctx.beginPath();
+            for (let x = 0; x <= fullSpan; x += stepM) {
+              const sx = worldToScreen(x, 0).x;
+              ctx.moveTo(sx, fullNeScr.y);
+              ctx.lineTo(sx, swScr.y);
+            }
+            for (let y = 0; y <= fullSpan; y += stepM) {
+              const sy = worldToScreen(0, y).y;
+              ctx.moveTo(swScr.x, sy);
+              ctx.lineTo(fullNeScr.x, sy);
+            }
+            ctx.stroke();
+          }
+        } else {
+          // --- MEDIUM & MICRO LOD: Individual Crisp Pillars, Hatches, Centerlines & Labels ---
+          const colStart = Math.max(0, Math.floor(minX / P));
+          const colEnd = Math.min(fullCells - 1, Math.floor(maxX / P));
+          const rowStart = Math.max(0, Math.floor(minY / P));
+          const rowEnd = Math.min(fullCells - 1, Math.floor(maxY / P));
+
+          // 1) Draw Intact Pillars
+          if (state.layers.pillars && colEnd >= colStart && rowEnd >= rowStart) {
+            ctx.fillStyle = '#3b2814'; // Warm sedimentary/potash rock fill
+            ctx.beginPath();
+            for (let r = rowStart; r <= rowEnd; r++) {
+              const wy0 = r * P;
+              const wy1 = wy0 + Wp;
+              const sy0 = worldToScreen(0, wy1).y;
+              const hScr = (wy1 - wy0) * state.scale;
+              for (let c = colStart; c <= colEnd; c++) {
+                const wx0 = c * P;
+                const sx0 = worldToScreen(wx0, 0).x;
+                ctx.rect(sx0, sy0, pillarPx, hScr);
+              }
+            }
+            ctx.fill();
+
+            // Apply geological hatch overlay when zoomed in sufficiently
+            if (pillarPx >= 14 && state.hatchPattern) {
+              ctx.fillStyle = state.hatchPattern;
+              ctx.fill();
+            }
+
+            // Crisp CAD vector outline around pillars
+            if (pillarPx >= 6) {
+              ctx.strokeStyle = '#d97706';
+              ctx.lineWidth = pillarPx >= 24 ? 1.4 : 0.8;
+              ctx.stroke();
+            }
+
+            // Pillar ID Labels (e.g., P[row, col]) at high zoom
+            if (pillarPx >= 54) {
+              ctx.fillStyle = 'rgba(253, 230, 138, 0.85)';
+              ctx.font = `600 ${Math.min(12, Math.floor(pillarPx / 6.5))}px "JetBrains Mono", monospace`;
+              ctx.textAlign = 'center';
+              ctx.textBaseline = 'middle';
+              for (let r = rowStart; r <= rowEnd; r++) {
+                const cy = worldToScreen(0, r * P + Wp / 2).y;
+                for (let c = colStart; c <= colEnd; c++) {
+                  const cx = worldToScreen(c * P + Wp / 2, 0).x;
+                  ctx.fillText(`P[${r},${c}]`, cx, cy - 6);
+                  if (pillarPx >= 85) {
+                    ctx.fillStyle = 'rgba(251, 191, 36, 0.55)';
+                    ctx.font = `400 9px "JetBrains Mono", monospace`;
+                    ctx.fillText(`${Wp}×${Wp}m`, cx, cy + 7);
+                    ctx.fillStyle = 'rgba(253, 230, 138, 0.85)';
+                    ctx.font = `600 ${Math.min(12, Math.floor(pillarPx / 6.5))}px "JetBrains Mono", monospace`;
+                  }
+                }
+              }
+            }
+          }
+
+          // 2) Draw Dashed Corridor Centerlines (N-S & E-W)
+          if (state.layers.centerlines && pitchPx >= 9) {
+            ctx.save();
+            ctx.strokeStyle = 'rgba(56, 189, 248, 0.55)';
+            ctx.lineWidth = 1;
+            ctx.setLineDash([6, 5]);
+            ctx.beginPath();
+
+            const yTopScr = worldToScreen(0, Math.min(L, maxY)).y;
+            const yBotScr = worldToScreen(0, Math.max(0, minY)).y;
+            const xLeftScr = worldToScreen(Math.max(0, minX), 0).x;
+            const xRightScr = worldToScreen(Math.min(L, maxX), 0).x;
+
+            // N-S Corridor Centerlines (at x = col * P + Wp + Wc / 2)
+            for (let c = Math.max(0, colStart - 1); c <= Math.min(fullCells, colEnd + 1); c++) {
+              const clX = c * P + Wp + Wc / 2;
+              if (clX <= L) {
+                const sx = worldToScreen(clX, 0).x;
+                ctx.moveTo(sx, yTopScr);
+                ctx.lineTo(sx, yBotScr);
+              }
+            }
+
+            // E-W Corridor Centerlines (at y = row * P + Wp + Wc / 2)
+            for (let r = Math.max(0, rowStart - 1); r <= Math.min(fullCells, rowEnd + 1); r++) {
+              const clY = r * P + Wp + Wc / 2;
+              if (clY <= L) {
+                const sy = worldToScreen(0, clY).y;
+                ctx.moveTo(xLeftScr, sy);
+                ctx.lineTo(xRightScr, sy);
+              }
+            }
+            ctx.stroke();
+            ctx.restore();
+          }
+        }
+      }
+
+      // 8C. EDGE REMAINDER HIGHLIGHT (e.g., 9 m strip on East and North boundaries)
+      if (state.layers.remainder && remainderM > 0.001) {
+        const fullNeScr = worldToScreen(fullSpan, fullSpan);
+        ctx.fillStyle = 'rgba(244, 63, 94, 0.24)';
+        ctx.strokeStyle = 'rgba(244, 63, 94, 0.85)';
+        ctx.lineWidth = 1.2;
+
+        // East Edge Remainder Strip: x from fullSpan to L, y from 0 to L
+        const eastStripW = neScr.x - fullNeScr.x;
+        if (eastStripW > 0.4) {
+          ctx.fillRect(fullNeScr.x, neScr.y, eastStripW, swScr.y - neScr.y);
+          if (eastStripW > 3) {
+            ctx.strokeRect(fullNeScr.x, neScr.y, eastStripW, swScr.y - neScr.y);
+          }
+        }
+
+        // North Edge Remainder Strip: x from 0 to fullSpan, y from fullSpan to L
+        const northStripH = fullNeScr.y - neScr.y;
+        if (northStripH > 0.4) {
+          ctx.fillRect(swScr.x, neScr.y, fullNeScr.x - swScr.x, northStripH);
+          if (northStripH > 3) {
+            ctx.strokeRect(swScr.x, neScr.y, fullNeScr.x - swScr.x, northStripH);
+          }
+        }
+
+        // Label Remainder when zoomed in
+        if (eastStripW >= 18) {
+          ctx.save();
+          ctx.fillStyle = '#fda4af';
+          ctx.font = '600 10px "JetBrains Mono", monospace';
+          ctx.textAlign = 'center';
+          const remTxt = `${Number.isInteger(remainderM) ? remainderM : remainderM.toFixed(2)} m REM`;
+          const midY = Math.max(neScr.y + 40, Math.min(swScr.y - 40, H / 2));
+          ctx.translate(fullNeScr.x + eastStripW / 2, midY);
+          ctx.rotate(-Math.PI / 2);
+          ctx.fillText(remTxt, 0, 3);
+          ctx.restore();
+        }
+      }
+
+      // 8D. UNDERGROUND SURVEY CONTROL TRAVERSE & GYRO AZIMUTH OVERLAY
+      if (state.layers.survey && fullCells >= 2) {
+        drawSurveyControlOverlay(L, Wp, Wc, P, fullCells, pitchPx);
+      }
+
+      // 8E. DIMENSION CALLOUTS & UNIT CELL PITCH BOX (at medium/high zoom)
+      if (state.layers.dimensions && pitchPx >= 42 && fullCells >= 1) {
+        drawDimensionCallouts(Wp, Wc, P, fullCells);
+      }
+
+      // 8F. LEASE BOUNDARY FRAME & COORDINATE GRID (EASTING / NORTHING)
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.75;
+      ctx.strokeRect(swScr.x, neScr.y, domainWScr, domainHScr);
+
+      drawCoordinateGridAndAxes(W, H, L);
+
+      // 8G. INTERACTIVE MEASUREMENT OVERLAY
+      if (state.measurePtA) {
+        drawMeasurementOverlay();
+      }
+
+      // 8H. UPDATE MINIMAP & HUD
+      renderMinimap();
+      updateHUD();
+    }
+
+    // --- 9. SURVEY CONTROL TRAVERSE & GYRO-AZIMUTH OVERLAY ---
+    function drawSurveyControlOverlay(L, Wp, Wc, P, fullCells, pitchPx) {
+      // Main haulage control backbone along central E-W and N-S corridors + perimeter loop
+      const midIdx = Math.floor(fullCells / 2);
+      const midCoord = midIdx * P + Wp + Wc / 2;
+      const westCoord = Math.min(2, fullCells - 1) * P + Wp + Wc / 2;
+      const eastCoord = Math.max(0, fullCells - 3) * P + Wp + Wc / 2;
+
+      const stations = [
+        { id: 'SHAFT-1 (BASE)', x: westCoord, y: westCoord, type: 'shaft' },
+        { id: 'GYRO-101', x: midCoord, y: westCoord, type: 'gyro' },
+        { id: 'CP-102', x: eastCoord, y: westCoord, type: 'station' },
+        { id: 'GYRO-103', x: eastCoord, y: midCoord, type: 'gyro' },
+        { id: 'CP-104', x: midCoord, y: midCoord, type: 'station' },
+        { id: 'GYRO-105', x: westCoord, y: midCoord, type: 'gyro' },
+        { id: 'SHAFT-2 (VENT)', x: eastCoord, y: eastCoord, type: 'shaft' }
+      ];
+
+      const legs = [
+        [0, 1], [1, 2], [2, 3], [3, 4], [4, 5], [5, 0], [3, 6]
+      ];
+
+      ctx.save();
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = pitchPx < 4 ? 1.5 : 2.2;
+      ctx.beginPath();
+      legs.forEach(([i, j]) => {
+        const a = worldToScreen(stations[i].x, stations[i].y);
+        const b = worldToScreen(stations[j].x, stations[j].y);
+        ctx.moveTo(a.x, a.y);
+        ctx.lineTo(b.x, b.y);
+      });
+      ctx.stroke();
+
+      // Draw Control Monument Triangles & Labels
+      stations.forEach(st => {
+        const s = worldToScreen(st.x, st.y);
+        const r = st.type === 'shaft' ? 6 : 4.5;
+
+        ctx.fillStyle = st.type === 'gyro' ? '#38bdf8' : '#10b981';
+        ctx.strokeStyle = '#070b12';
+        ctx.lineWidth = 1.5;
+
+        if (st.type === 'shaft') {
+          ctx.beginPath();
+          ctx.arc(s.x, s.y, r, 0, Math.PI * 2);
+          ctx.fill();
+          ctx.stroke();
+        } else {
+          // Survey Triangle
+          ctx.beginPath();
+          ctx.moveTo(s.x, s.y - r);
+          ctx.lineTo(s.x + r, s.y + r * 0.8);
+          ctx.lineTo(s.x - r, s.y + r * 0.8);
+          ctx.closePath();
+          ctx.fill();
+          ctx.stroke();
+        }
+
+        if (pitchPx >= 1.2) {
+          ctx.font = '600 10px "JetBrains Mono", monospace';
+          ctx.fillStyle = st.type === 'gyro' ? '#7dd3fc' : '#6ee7b7';
+          ctx.textAlign = 'left';
+          ctx.fillText(st.id, s.x + 8, s.y - 6);
+        }
+      });
+      ctx.restore();
+    }
+
+    // --- 10. DIMENSION CALLOUTS & UNIT CELL PITCH BOX ---
+    function drawDimensionCallouts(Wp, Wc, P, fullCells) {
+      // Pick the unit cell closest to current camera center so callouts are always visible when zoomed in
+      const c = Math.max(0, Math.min(fullCells - 1, Math.floor(state.camX / P)));
+      const r = Math.max(0, Math.min(fullCells - 1, Math.floor(state.camY / P)));
+
+      const x0 = c * P;
+      const x1 = x0 + Wp;
+      const x2 = x0 + P;
+      const y0 = r * P;
+      const y1 = y0 + Wp;
+      const y2 = y0 + P;
+
+      const p00 = worldToScreen(x0, y0);
+      const p22 = worldToScreen(x2, y2);
+
+      ctx.save();
+      // Dashed cyan bounding box highlighting the Unit Cell Pitch (P x P)
+      ctx.strokeStyle = '#38bdf8';
+      ctx.lineWidth = 1.5;
+      ctx.setLineDash([4, 3]);
+      ctx.strokeRect(p00.x, p22.y, p22.x - p00.x, p00.y - p22.y);
+      ctx.setLineDash([]);
+
+      // Top Pitch Dimension Line (P = Wp + Wc)
+      const dimTopY = p22.y - 16;
+      drawDimArrow(p00.x, dimTopY, p22.x, dimTopY, `Unit Pitch P = ${P} m`, '#38bdf8');
+
+      // Bottom Pillar Width Dimension Line (Wp)
+      const p10 = worldToScreen(x1, y0);
+      const dimBotY = p00.y + 16;
+      drawDimArrow(p00.x, dimBotY, p10.x, dimBotY, `Wp = ${Wp} m`, '#fbbf24');
+
+      // Bottom Corridor Width Dimension Line (Wc)
+      drawDimArrow(p10.x, dimBotY, p22.x, dimBotY, `Wc = ${Wc} m`, '#34d399');
+
+      ctx.restore();
+    }
+
+    function drawDimArrow(x1, y1, x2, y2, label, color) {
+      ctx.strokeStyle = color;
+      ctx.fillStyle = color;
+      ctx.lineWidth = 1.2;
+
+      ctx.beginPath();
+      ctx.moveTo(x1, y1);
+      ctx.lineTo(x2, y2);
+      // Ticks
+      ctx.moveTo(x1, y1 - 4);
+      ctx.lineTo(x1, y1 + 4);
+      ctx.moveTo(x2, y2 - 4);
+      ctx.lineTo(x2, y2 + 4);
+      ctx.stroke();
+
+      const midX = (x1 + x2) / 2;
+      ctx.font = '600 10px "JetBrains Mono", monospace';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'bottom';
+      ctx.fillText(label, midX, y1 - 3);
+    }
+
+    // --- 11. COORDINATE GRID (EASTING / NORTHING) ---
+    function drawCoordinateGridAndAxes(W, H, L) {
+      // Choose nice metric grid interval based on current scale
+      const targetPx = 110;
+      const rawStep = targetPx / state.scale;
+      const niceSteps = [1, 2, 5, 10, 20, 25, 50, 100, 200, 250, 500, 1000, 2000, 2500];
+      let step = niceSteps[niceSteps.length - 1];
+      for (const s of niceSteps) {
+        if (s >= rawStep) {
+          step = s;
+          break;
+        }
+      }
+
+      const tl = screenToWorld(0, 0);
+      const br = screenToWorld(W, H);
+
+      const startX = Math.floor(tl.x / step) * step;
+      const endX = Math.ceil(br.x / step) * step;
+      const startY = Math.floor(br.y / step) * step;
+      const endY = Math.ceil(tl.y / step) * step;
+
+      ctx.save();
+      ctx.strokeStyle = 'rgba(148, 163, 184, 0.11)';
+      ctx.lineWidth = 1;
+      ctx.font = '500 10px "JetBrains Mono", monospace';
+      ctx.fillStyle = 'rgba(148, 163, 184, 0.65)';
+
+      // Vertical Easting lines
+      ctx.beginPath();
+      for (let x = startX; x <= endX; x += step) {
+        const sx = worldToScreen(x, 0).x;
+        ctx.moveTo(sx, 0);
+        ctx.lineTo(sx, H);
+      }
+      // Horizontal Northing lines
+      for (let y = startY; y <= endY; y += step) {
+        const sy = worldToScreen(0, y).y;
+        ctx.moveTo(0, sy);
+        ctx.lineTo(W, sy);
+      }
+      ctx.stroke();
+
+      // Axis Coordinate Labels along Left & Bottom edges
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'bottom';
+      for (let x = startX; x <= endX; x += step) {
+        if (x < 0 || x > L) continue;
+        const sx = worldToScreen(x, 0).x;
+        if (sx > 45 && sx < W - 40) {
+          ctx.fillText(`${fmtInt(x)}m E`, sx + 3, H - 46);
+        }
+      }
+
+      ctx.textAlign = 'left';
+      ctx.textBaseline = 'middle';
+      for (let y = startY; y <= endY; y += step) {
+        if (y < 0 || y > L) continue;
+        const sy = worldToScreen(0, y).y;
+        if (sy > 60 && sy < H - 65) {
+          ctx.fillText(`${fmtInt(y)}m N`, 8, sy - 6);
+        }
+      }
+      ctx.restore();
+    }
+
+    // --- 12. INTERACTIVE DISTANCE & AZIMUTH MEASUREMENT ---
+    function drawMeasurementOverlay() {
+      const ptA = state.measurePtA;
+      const ptB = state.measurePtB || { x: state.mouseWorldX, y: state.mouseWorldY };
+
+      const sA = worldToScreen(ptA.x, ptA.y);
+      const sB = worldToScreen(ptB.x, ptB.y);
+
+      ctx.save();
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 2;
+      ctx.setLineDash([5, 4]);
+      ctx.beginPath();
+      ctx.moveTo(sA.x, sA.y);
+      ctx.lineTo(sB.x, sB.y);
+      ctx.stroke();
+      ctx.setLineDash([]);
+
+      // Endpoints
+      [sA, sB].forEach((pt, idx) => {
+        ctx.fillStyle = idx === 0 ? '#10b981' : '#38bdf8';
+        ctx.beginPath();
+        ctx.arc(pt.x, pt.y, 5, 0, Math.PI * 2);
+        ctx.fill();
+        ctx.strokeStyle = '#070b12';
+        ctx.lineWidth = 1.5;
+        ctx.stroke();
+      });
+
+      const dx = ptB.x - ptA.x;
+      const dy = ptB.y - ptA.y;
+      const dist = Math.hypot(dx, dy);
+      // Surveying Azimuth (0° = North +Y, clockwise)
+      let azDeg = (Math.atan2(dx, dy) * 180) / Math.PI;
+      if (azDeg < 0) azDeg += 360;
+
+      const readout = `Dist: ${fmtNum(dist, 2)} m | ΔE: ${fmtNum(dx, 2)} m | ΔN: ${fmtNum(dy, 2)} m | Az: ${azDeg.toFixed(2)}°`;
+      document.getElementById('measureReadout').textContent = readout;
+
+      // Floating badge near midpoint
+      const midX = (sA.x + sB.x) / 2;
+      const midY = (sA.y + sB.y) / 2 - 12;
+      ctx.font = '600 11px "JetBrains Mono", monospace';
+      const label = `${fmtNum(dist, 2)} m (${azDeg.toFixed(1)}°)`;
+      const tw = ctx.measureText(label).width;
+      ctx.fillStyle = 'rgba(15, 23, 42, 0.9)';
+      ctx.fillRect(midX - tw / 2 - 6, midY - 12, tw + 12, 18);
+      ctx.strokeStyle = '#10b981';
+      ctx.lineWidth = 1;
+      ctx.strokeRect(midX - tw / 2 - 6, midY - 12, tw + 12, 18);
+      ctx.fillStyle = '#6ee7b7';
+      ctx.textAlign = 'center';
+      ctx.fillText(label, midX, midY + 1);
+
+      ctx.restore();
+    }
+
+    // --- 13. MINIMAP INSET RENDERER ---
+    function renderMinimap() {
+      const mw = minimapCanvas.width;
+      const mh = minimapCanvas.height;
+      const { L, fullCells, P, remainderM } = metrics;
+      const fullSpan = fullCells * P;
+
+      mctx.fillStyle = '#0b101b';
+      mctx.fillRect(0, 0, mw, mh);
+
+      // Pillar extraction area tint
+      const fullRatio = fullSpan / L;
+      const fullPx = fullRatio * mw;
+      mctx.fillStyle = 'rgba(217, 119, 6, 0.32)';
+      mctx.fillRect(0, mh - fullPx, fullPx, fullPx);
+
+      // Highlight Edge Remainder Strip on Minimap
+      if (remainderM > 0.001) {
+        mctx.fillStyle = 'rgba(244, 63, 94, 0.65)';
+        mctx.fillRect(fullPx, 0, mw - fullPx, mh);
+        mctx.fillRect(0, 0, fullPx, mh - fullPx);
+      }
+
+      // Draw current viewport bounding box
+      const rect = viewportContainer.getBoundingClientRect();
+      const tl = screenToWorld(0, 0);
+      const br = screenToWorld(rect.width, rect.height);
+
+      const vx0 = Math.max(0, (tl.x / L) * mw);
+      const vx1 = Math.min(mw, (br.x / L) * mw);
+      const vy0 = Math.max(0, mh - (tl.y / L) * mh);
+      const vy1 = Math.min(mh, mh - (br.y / L) * mh);
+
+      mctx.strokeStyle = '#38bdf8';
+      mctx.lineWidth = 1.5;
+      mctx.strokeRect(vx0, vy0, Math.max(4, vx1 - vx0), Math.max(4, vy1 - vy0));
+      mctx.fillStyle = 'rgba(56, 189, 248, 0.14)';
+      mctx.fillRect(vx0, vy0, Math.max(4, vx1 - vx0), Math.max(4, vy1 - vy0));
+
+      // Approximate architectural scale ratio
+      const approxScale = Math.round(3780 / state.scale);
+      document.getElementById('minimapScaleText').textContent = `1:${approxScale.toLocaleString('en-US')}`;
+    }
+
+    // --- 14. LIVE CURSOR INSPECTION HUD ---
+    function updateHUD() {
+      const wx = state.mouseWorldX;
+      const wy = state.mouseWorldY;
+      const { L, Wp, P, fullCells } = metrics;
+      const fullSpan = fullCells * P;
+
+      document.getElementById('hudEasting').textContent = `${fmtNum(wx, 2)} m`;
+      document.getElementById('hudNorthing').textContent = `${fmtNum(wy, 2)} m`;
+      document.getElementById('hudZoom').textContent = `Zoom: ${state.scale.toFixed(2)} px/m`;
+
+      const badge = document.getElementById('hudFeatureBadge');
+      const cellHud = document.getElementById('hudCellIdx');
+
+      if (wx < 0 || wx > L || wy < 0 || wy > L) {
+        cellHud.textContent = 'OUTSIDE LEASE';
+        badge.textContent = 'OUTSIDE DOMAIN';
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold bg-slate-800 text-slate-400 border border-slate-700';
+        return;
+      }
+
+      if (wx >= fullSpan || wy >= fullSpan) {
+        cellHud.textContent = 'EDGE STRIP';
+        badge.textContent = `EDGE REMAINDER (${Number.isInteger(metrics.remainderM) ? metrics.remainderM : metrics.remainderM.toFixed(2)} m)`;
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold bg-rose-500/20 text-rose-300 border border-rose-500/40';
+        return;
+      }
+
+      const col = Math.floor(wx / P);
+      const row = Math.floor(wy / P);
+      const localX = wx - col * P;
+      const localY = wy - row * P;
+
+      cellHud.textContent = `[${col}, ${row}]`;
+
+      const inPillarX = localX <= Wp;
+      const inPillarY = localY <= Wp;
+
+      if (inPillarX && inPillarY) {
+        badge.textContent = `INTACT PILLAR P[${row},${col}]`;
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold bg-amber-500/20 text-amber-300 border border-amber-500/40';
+      } else if (!inPillarX && !inPillarY) {
+        badge.textContent = '4-WAY CORRIDOR INTERSECTION';
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold bg-sky-500/20 text-sky-300 border border-sky-500/40';
+      } else if (!inPillarX) {
+        badge.textContent = `N–S CORRIDOR (${metrics.Wc} m)`;
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+      } else {
+        badge.textContent = `E–W CORRIDOR (${metrics.Wc} m)`;
+        badge.className = 'px-2 py-0.5 rounded text-[11px] font-semibold bg-emerald-500/20 text-emerald-300 border border-emerald-500/40';
+      }
+    }
+
+    // --- 15. EVENT LISTENERS & INTERACTIVITY ---
+    function bindParameterPair(slider, input, key, min, max) {
+      slider.addEventListener('input', () => {
+        const val = parseFloat(slider.value);
+        input.value = val;
+        state[key] = val;
+        computeMetrics();
+        requestRender();
+      });
+      input.addEventListener('change', () => {
+        let val = parseFloat(input.value);
+        if (isNaN(val)) val = state[key];
+        val = Math.max(min, Math.min(max, val));
+        input.value = val;
+        slider.value = val;
+        state[key] = val;
+        computeMetrics();
+        requestRender();
+      });
+    }
+
+    bindParameterPair(sliderDomain, inputDomain, 'domain', 1000, 10000);
+    bindParameterPair(sliderPillar, inputPillar, 'pillarW', 5, 50);
+    bindParameterPair(sliderCorridor, inputCorridor, 'corridorW', 4, 20);
+
+    // Reset to exact 5x5 km Spec from Image
+    document.getElementById('btnResetSpec').addEventListener('click', () => {
+      state.domain = 5000;
+      state.pillarW = 15;
+      state.corridorW = 8;
+      sliderDomain.value = 5000;
+      inputDomain.value = 5000;
+      sliderPillar.value = 15;
+      inputPillar.value = 15;
+      sliderCorridor.value = 8;
+      inputCorridor.value = 8;
+      computeMetrics();
+      applyPreset('overview');
+    });
+
+    // Layer Toggles
+    const layerMap = {
+      layerPillars: 'pillars',
+      layerCorridors: 'corridors',
+      layerCenterlines: 'centerlines',
+      layerRemainder: 'remainder',
+      layerDimensions: 'dimensions',
+      layerSurvey: 'survey'
+    };
+    Object.entries(layerMap).forEach(([elId, layerKey]) => {
+      document.getElementById(elId).addEventListener('change', (e) => {
+        state.layers[layerKey] = e.target.checked;
+        requestRender();
+      });
+    });
+
+    // Preset Buttons
+    document.querySelectorAll('.preset-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        applyPreset(btn.dataset.preset);
+      });
+    });
+
+    // Zoom Buttons
+    function zoomByFactor(factor, centerX, centerY) {
+      const rect = canvas.getBoundingClientRect();
+      const cx = centerX !== undefined ? centerX : rect.width / 2;
+      const cy = centerY !== undefined ? centerY : rect.height / 2;
+
+      const worldBefore = screenToWorld(cx, cy);
+      state.scale = Math.max(0.03, Math.min(60, state.scale * factor));
+      const worldAfter = screenToWorld(cx, cy);
+
+      state.camX += worldBefore.x - worldAfter.x;
+      state.camY += worldBefore.y - worldAfter.y;
+      requestRender();
+    }
+
+    document.getElementById('btnZoomIn').addEventListener('click', () => zoomByFactor(1.45));
+    document.getElementById('btnZoomOut').addEventListener('click', () => zoomByFactor(1 / 1.45));
+
+    // Measure Tool Toggle
+    const btnMeasureTool = document.getElementById('btnMeasureTool');
+    const btnClearMeasure = document.getElementById('btnClearMeasure');
+    const measureBanner = document.getElementById('measureBanner');
+
+    btnMeasureTool.addEventListener('click', () => {
+      state.measureMode = !state.measureMode;
+      if (state.measureMode) {
+        btnMeasureTool.classList.add('bg-emerald-500/25', 'text-emerald-300', 'border-emerald-500/50');
+        measureBanner.classList.remove('hidden');
+        state.measurePtA = null;
+        state.measurePtB = null;
+        document.getElementById('measureReadout').textContent = 'Click Point A on the plan...';
+      } else {
+        btnMeasureTool.classList.remove('bg-emerald-500/25', 'text-emerald-300', 'border-emerald-500/50');
+        measureBanner.classList.add('hidden');
+        btnClearMeasure.classList.add('hidden');
+        state.measurePtA = null;
+        state.measurePtB = null;
+      }
+      requestRender();
+    });
+
+    btnClearMeasure.addEventListener('click', () => {
+      state.measurePtA = null;
+      state.measurePtB = null;
+      btnClearMeasure.classList.add('hidden');
+      document.getElementById('measureReadout').textContent = 'Click Point A on the plan...';
+      requestRender();
+    });
+
+    // Mouse Wheel Zoom on Canvas
+    canvas.addEventListener('wheel', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      const factor = e.deltaY < 0 ? 1.18 : 1 / 1.18;
+      zoomByFactor(factor, mx, my);
+    }, { passive: false });
+
+    // Pan & Click-to-Measure Mouse Events
+    let downX = 0, downY = 0;
+    canvas.addEventListener('mousedown', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      downX = e.clientX - rect.left;
+      downY = e.clientY - rect.top;
+      state.isDragging = true;
+      state.dragStartX = downX;
+      state.dragStartY = downY;
+      state.camStartX = state.camX;
+      state.camStartY = state.camY;
+      canvas.style.cursor = 'grabbing';
+    });
+
+    window.addEventListener('mousemove', (e) => {
+      const rect = canvas.getBoundingClientRect();
+      const sx = e.clientX - rect.left;
+      const sy = e.clientY - rect.top;
+      state.mouseScreenX = sx;
+      state.mouseScreenY = sy;
+
+      const wPos = screenToWorld(sx, sy);
+      state.mouseWorldX = wPos.x;
+      state.mouseWorldY = wPos.y;
+
+      if (state.isDragging) {
+        const dx = sx - state.dragStartX;
+        const dy = sy - state.dragStartY;
+        state.camX = state.camStartX - dx / state.scale;
+        state.camY = state.camStartY + dy / state.scale;
+        requestRender();
+      } else {
+        updateHUD();
+        if (state.measureMode && state.measurePtA && !state.measurePtB) {
+          requestRender();
+        }
+      }
+    });
+
+    window.addEventListener('mouseup', (e) => {
+      if (!state.isDragging) return;
+      state.isDragging = false;
+      canvas.style.cursor = 'crosshair';
+
+      const rect = canvas.getBoundingClientRect();
+      const upX = e.clientX - rect.left;
+      const upY = e.clientY - rect.top;
+      const moved = Math.hypot(upX - downX, upY - downY);
+
+      // Handle Click-to-Measure if pointer barely moved
+      if (state.measureMode && moved < 5) {
+        const wPt = screenToWorld(upX, upY);
+        if (!state.measurePtA || state.measurePtB) {
+          state.measurePtA = wPt;
+          state.measurePtB = null;
+          btnClearMeasure.classList.remove('hidden');
+        } else {
+          state.measurePtB = wPt;
+        }
+        requestRender();
+      }
+    });
+
+    // Touch Support for Mobile/Tablet Pan & Pinch-Zoom
+    let lastTouchDist = null;
+    canvas.addEventListener('touchstart', (e) => {
+      if (e.touches.length === 1) {
+        const rect = canvas.getBoundingClientRect();
+        state.isDragging = true;
+        state.dragStartX = e.touches[0].clientX - rect.left;
+        state.dragStartY = e.touches[0].clientY - rect.top;
+        state.camStartX = state.camX;
+        state.camStartY = state.camY;
+      } else if (e.touches.length === 2) {
+        state.isDragging = false;
+        lastTouchDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchmove', (e) => {
+      e.preventDefault();
+      const rect = canvas.getBoundingClientRect();
+      if (e.touches.length === 1 && state.isDragging) {
+        const sx = e.touches[0].clientX - rect.left;
+        const sy = e.touches[0].clientY - rect.top;
+        state.camX = state.camStartX - (sx - state.dragStartX) / state.scale;
+        state.camY = state.camStartY + (sy - state.dragStartY) / state.scale;
+        const wPos = screenToWorld(sx, sy);
+        state.mouseWorldX = wPos.x;
+        state.mouseWorldY = wPos.y;
+        requestRender();
+      } else if (e.touches.length === 2 && lastTouchDist) {
+        const newDist = Math.hypot(
+          e.touches[0].clientX - e.touches[1].clientX,
+          e.touches[0].clientY - e.touches[1].clientY
+        );
+        const midX = ((e.touches[0].clientX + e.touches[1].clientX) / 2) - rect.left;
+        const midY = ((e.touches[0].clientY + e.touches[1].clientY) / 2) - rect.top;
+        zoomByFactor(newDist / lastTouchDist, midX, midY);
+        lastTouchDist = newDist;
+      }
+    }, { passive: false });
+
+    canvas.addEventListener('touchend', () => {
+      state.isDragging = false;
+      lastTouchDist = null;
+    });
+
+    // Click on Minimap to Jump Camera
+    minimapCanvas.addEventListener('click', (e) => {
+      const rect = minimapCanvas.getBoundingClientRect();
+      const mx = e.clientX - rect.left;
+      const my = e.clientY - rect.top;
+      state.camX = (mx / rect.width) * metrics.L;
+      state.camY = (1 - my / rect.height) * metrics.L;
+      requestRender();
+    });
+
+    window.addEventListener('resize', resizeCanvas);
+
+    // --- 16. INITIALIZATION ---
+    window.onload = function () {
+      createHatchPattern();
+      computeMetrics();
+      resizeCanvas();
+      applyPreset('overview');
+    };
+  </script>
+</body>
+</html>
