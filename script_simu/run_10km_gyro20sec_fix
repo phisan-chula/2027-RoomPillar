@@ -6,7 +6,7 @@ SPANS=40
 CTRL_SPAC=250
 SIGMA_GYRO=20
 TUNNEL_LENGTH=$(( SPANS * CTRL_SPAC / 1000 ))
-OUT_BASE="./RESULT_${TUNNEL_LENGTH}km_${SIGMA_GYRO}sec"
+OUT_BASE="./RESULT_$(basename "$0")"
 
 # Clean up background jobs if interrupted (Ctrl+C)
 trap 'kill 0' SIGINT SIGTERM
