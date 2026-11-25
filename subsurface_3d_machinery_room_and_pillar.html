@@ -1,0 +1,2892 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SUBSURFACE 3D CAD/GIS — Underground Mining, Mapping, Inspection &amp; Administration</title>
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fonts: Inter & JetBrains Mono -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Three.js r128 & OrbitControls -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/three@0.128.0/examples/js/controls/OrbitControls.js"></script>
+
+    <style>
+        :root {
+            --bg-deep: #0b111a;
+            --bg-panel: #111927;
+            --bg-card: #162133;
+            --border-subtle: #1e293b;
+            --accent-cyan: #38bdf8;
+            --accent-emerald: #10b981;
+            --accent-amber: #d97706;
+            --accent-crimson: #f43f5e;
+            --text-main: #e2e8f0;
+            --text-muted: #94a3b8;
+        }
+
+        * {
+            box-sizing: border-box;
+            user-select: none;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            background-color: var(--bg-deep);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            overflow: hidden;
+            width: 100vw;
+            height: 100vh;
+        }
+
+        .font-mono-tech {
+            font-family: 'JetBrains Mono', monospace;
+        }
+
+        ::-webkit-scrollbar {
+            width: 5px;
+            height: 5px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #0b111a;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #24334a;
+            border-radius: 9999px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #384e70;
+        }
+
+        input[type="range"] {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 100%;
+            height: 4px;
+            background: #1e293b;
+            border-radius: 9999px;
+            outline: none;
+        }
+        input[type="range"]::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 13px;
+            height: 13px;
+            border-radius: 50%;
+            background: #38bdf8;
+            cursor: pointer;
+            box-shadow: 0 0 8px rgba(56, 189, 248, 0.75);
+            border: 2px solid #0b111a;
+            transition: transform 0.12s ease;
+        }
+        input[type="range"]::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+        }
+
+        .cad-checkbox {
+            appearance: none;
+            -webkit-appearance: none;
+            width: 14px;
+            height: 14px;
+            border: 1.5px solid #334155;
+            border-radius: 3px;
+            background: #0b111a;
+            cursor: pointer;
+            position: relative;
+            transition: all 0.15s ease;
+            flex-shrink: 0;
+        }
+        .cad-checkbox:checked {
+            background: #38bdf8;
+            border-color: #38bdf8;
+        }
+        .cad-checkbox:checked::after {
+            content: '';
+            position: absolute;
+            left: 3.5px;
+            top: 0.5px;
+            width: 4px;
+            height: 8px;
+            border: solid #0b111a;
+            border-width: 0 2px 2px 0;
+            transform: rotate(45deg);
+        }
+        .cad-checkbox:disabled {
+            opacity: 0.4;
+            cursor: not-allowed;
+        }
+
+        #canvas-container {
+            position: absolute;
+            inset: 0;
+            z-index: 1;
+        }
+
+        .glass-panel {
+            background: rgba(17, 25, 39, 0.92);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(30, 41, 59, 0.95);
+        }
+
+        .preset-btn.active,
+        .chip-btn.active {
+            background: rgba(56, 189, 248, 0.18);
+            border-color: #38bdf8;
+            color: #7dd3fc;
+            font-weight: 700;
+            box-shadow: 0 0 12px rgba(56, 189, 248, 0.22);
+        }
+
+        .solo-btn.active {
+            background: #38bdf8;
+            color: #0b111a;
+            border-color: #38bdf8;
+            font-weight: 700;
+        }
+    </style>
+</head>
+<body class="antialiased selection:bg-sky-500/30 selection:text-sky-200">
+
+    <!-- WebGL 3D Viewport -->
+    <div id="canvas-container"></div>
+
+    <!-- Non-Blocking Runtime Error Banner -->
+    <div id="runtime-error-banner" class="fixed top-16 right-4 z-50 hidden max-w-md glass-panel border border-rose-500/70 rounded-xl p-3 text-xs text-rose-200 shadow-2xl">
+        <div class="font-mono-tech font-bold text-rose-400 mb-1">WEBGL / RUNTIME NOTICE</div>
+        <div id="runtime-error-text" class="font-mono-tech text-[11px] leading-relaxed"></div>
+    </div>
+
+    <!-- Top Floating Camera Presets & Quick Controls Toolbar -->
+    <header class="fixed top-3 left-3 md:left-[354px] right-3 z-20 flex flex-wrap items-center justify-between gap-2 pointer-events-none">
+        <!-- View Presets -->
+        <div class="glass-panel rounded-xl px-2.5 py-1.5 flex items-center gap-1.5 shadow-2xl pointer-events-auto overflow-x-auto max-w-full">
+            <button id="mobile-menu-btn" type="button" class="md:hidden px-2.5 py-1.5 rounded-lg bg-slate-800/90 border border-slate-700 text-sky-400 text-xs font-semibold flex items-center gap-1.5">
+                <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16"/></svg>
+                <span>CAD</span>
+            </button>
+            <button type="button" data-preset="iso" class="preset-btn active px-2.5 py-1 rounded-lg border border-slate-700/80 bg-slate-900/75 hover:bg-slate-800 text-xs font-medium text-slate-200 transition whitespace-nowrap">
+                Isometric 3D
+            </button>
+            <button type="button" data-preset="top" class="preset-btn px-2.5 py-1 rounded-lg border border-slate-700/80 bg-slate-900/75 hover:bg-slate-800 text-xs font-medium text-slate-200 transition whitespace-nowrap">
+                Top Plan (2D)
+            </button>
+            <button type="button" data-preset="profile" class="preset-btn px-2.5 py-1 rounded-lg border border-slate-700/80 bg-slate-900/75 hover:bg-slate-800 text-xs font-medium text-slate-200 transition whitespace-nowrap">
+                Side Elevation
+            </button>
+            <button type="button" data-preset="h1" class="preset-btn px-2.5 py-1 rounded-lg border border-slate-700/80 bg-slate-900/75 hover:bg-slate-800 text-xs font-medium text-slate-200 transition whitespace-nowrap">
+                Horizon 1 (-100m)
+            </button>
+            <button type="button" data-preset="shaft" class="preset-btn px-2.5 py-1 rounded-lg border border-slate-700/80 bg-slate-900/75 hover:bg-slate-800 text-xs font-medium text-slate-200 transition whitespace-nowrap">
+                Shaft-1 Base
+            </button>
+            <button type="button" data-preset="fleet" class="preset-btn px-2.5 py-1 rounded-lg border border-amber-500/40 bg-amber-950/40 hover:bg-amber-900/50 text-xs font-medium text-amber-300 transition whitespace-nowrap flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                Fleet &amp; SLAM
+            </button>
+            <button type="button" data-preset="walk" class="preset-btn px-2.5 py-1 rounded-lg border border-emerald-500/40 bg-emerald-950/40 hover:bg-emerald-900/50 text-xs font-medium text-emerald-300 transition whitespace-nowrap flex items-center gap-1.5">
+                <span class="w-1.5 h-1.5 rounded-full bg-emerald-400"></span>
+                Walkthrough (WASD)
+            </button>
+        </div>
+
+        <!-- Quick Action Chips -->
+        <div class="glass-panel rounded-xl px-3 py-1.5 hidden xl:flex items-center gap-2.5 shadow-2xl pointer-events-auto">
+            <button id="btn-toggle-wireframe" type="button" class="px-2 py-1 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-[11px] font-mono-tech text-slate-300 transition">
+                Grid Wireframe: ON
+            </button>
+            <div class="h-4 w-[1px] bg-slate-700"></div>
+            <button id="btn-compress-overburden" type="button" class="px-2 py-1 rounded-lg border border-slate-700 bg-slate-900/80 hover:bg-slate-800 text-[11px] font-mono-tech text-amber-300 transition" title="Visually compress 100m caprock gap">
+                Overburden: 100m True
+            </button>
+            <div class="h-4 w-[1px] bg-slate-700"></div>
+            <button id="btn-reset-view" type="button" class="text-xs font-semibold text-sky-400 hover:text-sky-300 transition">
+                Reset View
+            </button>
+        </div>
+    </header>
+
+    <!-- Left Subsurface CAD/GIS Sidebar -->
+    <aside id="left-sidebar" class="fixed top-3 left-3 bottom-10 w-[334px] z-30 glass-panel rounded-2xl shadow-2xl flex flex-col overflow-hidden transition-transform duration-300 -translate-x-[360px] md:translate-x-0">
+        <!-- Header -->
+        <div class="p-3.5 border-b border-slate-800 flex items-center justify-between bg-[#0d1420]">
+            <div>
+                <div class="flex items-center gap-2">
+                    <h1 class="text-xs font-bold tracking-wider text-slate-100 leading-tight">SUBSURFACE<br>CAD/GIS</h1>
+                    <span class="px-1.5 py-0.5 text-[9px] font-mono-tech font-bold rounded bg-amber-500/20 text-amber-300 border border-amber-500/40">UNDERGROUND<br>MINING</span>
+                </div>
+                <p class="text-[10px] text-slate-400 mt-1">Mapping, Inspection &amp; Administration</p>
+            </div>
+            <div class="text-right">
+                <span id="header-depth-badge" class="inline-block px-2 py-1 rounded-lg bg-slate-900 border border-sky-500/30 text-[10px] font-mono-tech text-sky-300">
+                    5 Horizons<br>0m to -305m
+                </span>
+            </div>
+            <button id="close-sidebar-btn" type="button" class="md:hidden p-1 text-slate-400 hover:text-white">
+                <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"/></svg>
+            </button>
+        </div>
+
+        <!-- Scrollable Body -->
+        <div class="flex-1 overflow-y-auto p-3 space-y-3">
+
+            <!-- 1. Grid Design Parameters -->
+            <section class="bg-[#162133] border border-slate-800 rounded-xl p-2.5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono-tech font-semibold uppercase tracking-wider text-sky-400">
+                        • Grid Design Parameters
+                    </span>
+                    <span id="badge-pitch" class="text-[10px] font-mono-tech text-sky-300">Pitch P = 23 m</span>
+                </div>
+
+                <!-- Extent Presets -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Domain Extent Presets</span>
+                        <span id="val-domain" class="font-mono-tech font-semibold text-sky-300">1,000 × 1,000 m</span>
+                    </div>
+                    <div class="grid grid-cols-4 gap-1">
+                        <button type="button" data-domain="500" class="domain-btn chip-btn py-1 rounded-lg border border-slate-700 bg-[#0b111a] hover:bg-slate-800 text-[10px] font-mono-tech text-slate-300 transition">500 m</button>
+                        <button type="button" data-domain="1000" class="domain-btn chip-btn active py-1 rounded-lg border border-slate-700 bg-[#0b111a] hover:bg-slate-800 text-[10px] font-mono-tech text-slate-300 transition">1 km</button>
+                        <button type="button" data-domain="2000" class="domain-btn chip-btn py-1 rounded-lg border border-slate-700 bg-[#0b111a] hover:bg-slate-800 text-[10px] font-mono-tech text-slate-300 transition">2 km</button>
+                        <button type="button" data-domain="5000" class="domain-btn chip-btn py-1 rounded-lg border border-slate-700 bg-[#0b111a] hover:bg-slate-800 text-[10px] font-mono-tech text-slate-300 transition">5 km</button>
+                    </div>
+                </div>
+
+                <!-- Domain Size L Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Domain Size (L)</span>
+                        <span id="val-domain-slider" class="font-mono-tech font-semibold text-slate-200">1,000 m</span>
+                    </div>
+                    <input id="slider-domain" type="range" min="300" max="5000" step="100" value="1000">
+                </div>
+
+                <!-- Pillar Width Wp -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Pillar Width (W<sub>p</sub>)</span>
+                        <span id="val-wp" class="font-mono-tech font-semibold text-amber-400">15 m</span>
+                    </div>
+                    <input id="slider-wp" type="range" min="8" max="30" step="1" value="15">
+                </div>
+
+                <!-- Corridor Width Wc -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Corridor Width (W<sub>c</sub>)</span>
+                        <span id="val-wc" class="font-mono-tech font-semibold text-sky-300">8 m</span>
+                    </div>
+                    <input id="slider-wc" type="range" min="4" max="16" step="1" value="8">
+                </div>
+
+                <!-- Seam Height H -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Seam / Floor Height (H)</span>
+                        <span id="val-height" class="font-mono-tech font-semibold text-emerald-400">5.0 m</span>
+                    </div>
+                    <input id="slider-height" type="range" min="3" max="10" step="0.5" value="5">
+                </div>
+            </section>
+
+            <!-- 2. Vertical Stratigraphy -->
+            <section class="bg-[#162133] border border-slate-800 rounded-xl p-2.5 space-y-2.5">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono-tech font-semibold uppercase tracking-wider text-amber-400">
+                        • Vertical Stratigraphy
+                    </span>
+                    <span class="text-[10px] font-mono-tech text-emerald-400">Ground: 0.0 m</span>
+                </div>
+
+                <div class="flex items-center justify-between text-[10.5px] bg-[#0b111a] px-2 py-1.5 rounded-lg border border-slate-800">
+                    <span class="text-slate-400">1st Horizon Roof: <strong class="text-sky-300 font-mono-tech">-100.0 m</strong></span>
+                    <span id="lbl-deepest-strat" class="text-slate-400">Deepest: <strong class="text-rose-400 font-mono-tech">-305.0 m</strong></span>
+                </div>
+
+                <!-- Horizon Count 5 vs 9 -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Horizon Count</span>
+                        <span id="val-hcount" class="font-mono-tech font-semibold text-sky-300">5 Horizons</span>
+                    </div>
+                    <div class="grid grid-cols-2 gap-1.5">
+                        <button type="button" data-hcount="5" class="hcount-btn chip-btn active py-1 rounded-lg border border-slate-700 bg-[#0b111a] hover:bg-slate-800 text-[10px] font-mono-tech text-slate-300 transition">5 Horizons (50m)</button>
+                        <button type="button" data-hcount="9" class="hcount-btn chip-btn py-1 rounded-lg border border-slate-700 bg-[#0b111a] hover:bg-slate-800 text-[10px] font-mono-tech text-slate-300 transition">9 Horizons (25m)</button>
+                    </div>
+                </div>
+
+                <!-- Vertical Interval -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Vertical Interval</span>
+                        <span id="val-interval" class="font-mono-tech font-semibold text-sky-300">50 m</span>
+                    </div>
+                    <input id="slider-interval" type="range" min="15" max="60" step="5" value="50">
+                </div>
+
+                <!-- Z-Exaggeration Slider -->
+                <div>
+                    <div class="flex justify-between text-xs mb-1">
+                        <span class="text-slate-400">Z-Exaggeration</span>
+                        <span id="val-zscale" class="font-mono-tech font-semibold text-sky-300">1.0×</span>
+                    </div>
+                    <input id="slider-zscale" type="range" min="1.0" max="2.5" step="0.1" value="1.0">
+                </div>
+
+                <!-- Sidebar Overburden Compression Toggle -->
+                <label class="flex items-center justify-between pt-0.5 cursor-pointer">
+                    <span class="text-[11px] text-slate-300">Compress 100m Caprock Overburden</span>
+                    <input id="toggle-compress-ob" type="checkbox" class="cad-checkbox">
+                </label>
+            </section>
+
+            <!-- 3. Live Engineering & Geomechanical Metrics -->
+            <section class="bg-[#162133] border border-slate-800 rounded-xl p-2.5 space-y-2">
+                <div class="flex items-center justify-between">
+                    <span class="text-[10px] font-mono-tech font-semibold uppercase tracking-wider text-emerald-400">
+                        • Engineering &amp; Geomechanics
+                    </span>
+                    <span class="text-[9px] font-mono-tech text-slate-400">ρ = 2.10 t/m³</span>
+                </div>
+
+                <div class="grid grid-cols-2 gap-1.5">
+                    <div class="bg-[#0b111a] p-2 rounded-lg border border-slate-800">
+                        <div class="text-[10px] text-slate-400">Cells / Axis</div>
+                        <div id="metric-cells-axis" class="text-xs font-mono-tech font-bold text-sky-400 mt-0.5">43.48 cells</div>
+                    </div>
+                    <div class="bg-[#0b111a] p-2 rounded-lg border border-slate-800">
+                        <div class="text-[10px] text-slate-400">Extraction Ratio</div>
+                        <div id="metric-extraction" class="text-xs font-mono-tech font-bold text-emerald-400 mt-0.5">57.47%</div>
+                    </div>
+                </div>
+
+                <!-- Extraction Progress Bar -->
+                <div class="w-full h-1.5 bg-slate-800 rounded-full overflow-hidden">
+                    <div id="bar-extraction" class="h-full bg-gradient-to-r from-emerald-500 to-sky-400 transition-all duration-200" style="width: 57.47%"></div>
+                </div>
+
+                <div class="bg-[#0b111a] p-2 rounded-lg border border-slate-800 space-y-1 text-[10.5px]">
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Full Pillars / Horizon (Rem):</span>
+                        <span id="metric-pillars" class="font-mono-tech text-amber-400">1,849 (11 m)</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Total Centerline (All H):</span>
+                        <span id="metric-total-centerline" class="font-mono-tech text-slate-200">434.78 km</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Net Corridor Length (All H):</span>
+                        <span id="metric-net-corridor" class="font-mono-tech text-slate-200">359.19 km</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">Total Excavated Volume:</span>
+                        <span id="metric-excavated-vol" class="font-mono-tech font-semibold text-sky-300">14,367,500 m³</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-400">In-situ Pillar Volume:</span>
+                        <span id="metric-pillar-vol" class="font-mono-tech text-amber-300">10,400,625 m³</span>
+                    </div>
+                    <div class="flex justify-between border-t border-slate-800 pt-1">
+                        <span class="text-slate-300 font-medium">Extracted Ore Tonnage:</span>
+                        <span id="metric-tonnage" class="font-mono-tech font-bold text-emerald-400">30.17 Mt</span>
+                    </div>
+                    <div class="flex justify-between">
+                        <span class="text-slate-300 font-medium">Max Pillar Stress (-300m):</span>
+                        <span id="metric-max-stress" class="font-mono-tech font-bold text-rose-400">16.01 MPa</span>
+                    </div>
+                </div>
+            </section>
+
+            <!-- 4. CAD/GIS Layer & Horizon Visibility Toggles -->
+            <section class="bg-[#162133] border border-slate-800 rounded-xl p-2.5 space-y-2">
+                <div class="flex items-center justify-between pb-1 border-b border-slate-800">
+                    <span class="text-[10px] font-mono-tech font-semibold uppercase tracking-wider text-slate-300">
+                        • Horizon &amp; CAD Layers
+                    </span>
+                    <button id="btn-show-all-horizons" type="button" class="text-[9px] font-mono-tech text-sky-400 hover:text-sky-300 underline">
+                        Show All
+                    </button>
+                </div>
+
+                <!-- Ground Surface Datum Toggle -->
+                <div class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50">
+                    <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                        <input id="toggle-surface" type="checkbox" class="cad-checkbox" checked>
+                        <span class="w-2 h-2 rounded-full bg-emerald-400 shrink-0"></span>
+                        <span class="text-[11px] font-medium text-slate-200 truncate">Ground Surface (0.0 m)</span>
+                    </label>
+                    <button type="button" data-solo="surface" class="solo-btn px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900 text-[9px] font-mono-tech text-slate-300 hover:border-sky-400 transition">SOLO</button>
+                </div>
+
+                <!-- Dynamic Horizon List -->
+                <div id="horizon-layers-list" class="space-y-1 max-h-40 overflow-y-auto pr-0.5"></div>
+
+                <!-- Structural, CAD & Fleet Overlay Toggles -->
+                <div class="pt-1.5 border-t border-slate-800 space-y-1">
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-amber-600/80 border border-amber-400"></span>
+                            <span id="lbl-pillars-toggle" class="text-[11px] text-slate-300">Intact Pillars (15×15 m)</span>
+                        </div>
+                        <input id="toggle-pillars" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-0.5 bg-sky-400"></span>
+                            <span id="lbl-corridors-toggle" class="text-[11px] text-slate-300">Corridor Centerlines (8 m)</span>
+                        </div>
+                        <input id="toggle-corridors" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-rose-500/30 border border-rose-400"></span>
+                            <span id="lbl-remainder-toggle" class="text-[11px] text-slate-300">NE Remainder Zone (11 m)</span>
+                        </div>
+                        <input id="toggle-remainder" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-sm border border-dashed border-emerald-400 bg-emerald-500/10"></span>
+                            <span id="lbl-callouts-toggle" class="text-[11px] text-slate-300">Unit Cell Cutout (23×23 m)</span>
+                        </div>
+                        <input id="toggle-callouts" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-sm border border-emerald-400 bg-emerald-500/20"></span>
+                            <span class="text-[11px] text-slate-300">Survey Gyro Traverse Loop</span>
+                        </div>
+                        <input id="toggle-survey" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-rose-400"></span>
+                            <span class="text-[11px] text-slate-300">Shaft-1 Base &amp; Vent Shaft-2</span>
+                        </div>
+                        <input id="toggle-shaft" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-slate-600/60 border border-slate-400"></span>
+                            <span class="text-[11px] text-slate-300">Interburden Strata Wireframe</span>
+                        </div>
+                        <input id="toggle-strata" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="text-[10px] font-mono-tech text-sky-300 font-bold">Z</span>
+                            <span class="text-[11px] text-slate-300">Elevation Depth Rulers</span>
+                        </div>
+                        <input id="toggle-rulers" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-sm bg-yellow-400 border border-amber-600"></span>
+                            <span class="text-[11px] text-slate-300">Mining Fleet &amp; SLAM Robots</span>
+                        </div>
+                        <input id="toggle-fleet" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+
+                    <label class="flex items-center justify-between py-0.5 px-1 rounded hover:bg-slate-800/50 cursor-pointer">
+                        <div class="flex items-center gap-2">
+                            <span class="w-2.5 h-2.5 rounded-full bg-cyan-400 shadow-[0_0_6px_#22d3ee]"></span>
+                            <span class="text-[11px] text-slate-300">SLAM LiDAR Scans &amp; Map Cloud</span>
+                        </div>
+                        <input id="toggle-slam-cloud" type="checkbox" class="cad-checkbox" checked>
+                    </label>
+                </div>
+            </section>
+        </div>
+    </aside>
+
+    <!-- Floating Pillar Geomechanical Inspector Card -->
+    <div id="inspector-card" class="fixed bottom-11 right-3 z-20 w-80 glass-panel rounded-xl p-3.5 shadow-2xl border border-sky-500/50 transition-all duration-200 opacity-0 pointer-events-none translate-y-2">
+        <div class="flex items-center justify-between border-b border-slate-800 pb-2 mb-2">
+            <div class="flex items-center gap-2">
+                <span id="insp-badge" class="px-1.5 py-0.5 rounded text-[10px] font-mono-tech font-bold bg-amber-500/20 text-amber-300 border border-amber-500/40">PILLAR</span>
+                <h3 id="insp-title" class="text-xs font-mono-tech font-bold text-white">H1-P[21,21]</h3>
+            </div>
+            <button id="insp-close" type="button" class="text-slate-400 hover:text-white text-xs px-1">✕</button>
+        </div>
+        <div class="space-y-1.5 text-[11px] font-mono-tech">
+            <div class="flex justify-between">
+                <span class="text-slate-400">Horizon Level:</span>
+                <span id="insp-level" class="text-sky-300">Horizon 1 (Upper Level)</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-400">Center E / N:</span>
+                <span id="insp-en" class="text-slate-200">494.5 m, 494.5 m</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-400">Roof → Floor Depth:</span>
+                <span id="insp-z" class="text-emerald-300">-100.0 m to -105.0 m</span>
+            </div>
+            <div class="flex justify-between">
+                <span class="text-slate-400">Tributary Stress (σ<sub>p</sub>):</span>
+                <span id="insp-stress" class="text-rose-400 font-bold">5.42 MPa</span>
+            </div>
+            <div class="flex justify-between border-t border-slate-800 pt-1">
+                <span class="text-slate-400">Volume / Mass:</span>
+                <span id="insp-vol-mass" class="text-amber-300">1,125 m³ (2,363 t)</span>
+            </div>
+        </div>
+    </div>
+
+    <!-- Walkthrough HUD Banner -->
+    <div id="walk-banner" class="fixed top-16 left-1/2 -translate-x-1/2 z-20 glass-panel border border-emerald-500/50 rounded-xl px-4 py-2 shadow-xl hidden items-center gap-3">
+        <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+        <span class="text-xs font-medium text-emerald-200">Corridor Walkthrough — <kbd class="px-1.5 py-0.5 bg-slate-800 rounded border border-slate-600 font-mono-tech text-[10px]">W A S D</kbd> Move, Drag Look</span>
+        <select id="walk-level-select" class="bg-slate-900 border border-slate-700 rounded-lg px-2 py-1 text-xs font-mono-tech text-sky-300 outline-none"></select>
+    </div>
+
+    <!-- Bottom CAD Status Bar -->
+    <footer class="fixed bottom-0 left-0 right-0 h-8 bg-[#080d14] border-t border-slate-800 z-30 px-3 flex items-center justify-between text-[11px] font-mono-tech text-slate-400">
+        <div class="flex items-center gap-3 truncate">
+            <span id="status-coords" class="text-sky-300">E (X): 500.00 m | N (Y): 500.00 m</span>
+            <span class="hidden sm:inline text-slate-700">|</span>
+            <span id="status-cell" class="hidden sm:inline text-slate-200">CELL [21, 21]</span>
+            <span class="hidden md:inline text-slate-700">|</span>
+            <span id="status-active-horizon" class="hidden md:inline text-emerald-400">ACTIVE: HORIZON 1 (-100m)</span>
+        </div>
+        <div class="flex items-center gap-3 shrink-0">
+            <span id="status-fleet" class="hidden md:inline text-cyan-300">Fleet: 15 | SLAM: 0 pts</span>
+            <span class="hidden md:inline text-slate-700">|</span>
+            <span id="status-instances" class="hidden lg:inline text-amber-300">9,245 Pillars</span>
+            <span class="hidden lg:inline text-slate-700">|</span>
+            <span id="status-fps" class="text-emerald-400">60 FPS</span>
+        </div>
+    </footer>
+
+    <script>
+        'use strict';
+
+        /**
+         * =====================================================================
+         * 1. MineParameters — Validated Domain, Stratigraphy & Layer State
+         * =====================================================================
+         */
+        class MineParameters {
+            static MAX_HORIZONS = 9;
+
+            constructor(overrides = {}) {
+                // Core spatial & geological defaults (Underground Mining)
+                this.domainSize = 1000;            // 1,000 m × 1,000 m (1 km × 1 km)
+                this.pillarWidth = 15;             // Wp = 15 m
+                this.corridorWidth = 8;            // Wc = 8 m
+                this.seamHeight = 5.0;             // H = 5.0 m floor height
+                this.groundLevel = 0.0;            // 0.0 m surface datum
+                this.firstHorizonDepth = -100.0;   // Horizon 1 starts at -100 m
+                this.horizonCount = 5;             // 5 horizons (-100 m to -300 m)
+                this.verticalInterval = 50;        // 50 m spacing
+                this.zScale = 1.0;                 // Vertical exaggeration factor
+                this.compressOverburden = false;   // Visual caprock compression
+                this.rockDensity = 2.10;           // 2.10 t/m³ ore density
+                this.overburdenUnitWeight = 22.5;  // 22.5 kN/m³ overburden rock unit weight
+
+                // Visibility flags
+                this.showSurface = true;
+                this.showHorizons = Array(MineParameters.MAX_HORIZONS).fill(true);
+                this.soloTarget = null;            // null | 'surface' | 0..8
+                this.showPillars = true;
+                this.showCorridors = true;
+                this.showRemainder = true;
+                this.showCallouts = true;
+                this.showSurvey = true;
+                this.showShaft = true;
+                this.showStrata = true;
+                this.showRulers = true;
+                this.showFleet = true;
+                this.showSlamPointCloud = true;
+                this.gridWireframe = true;
+
+                this.update(overrides);
+            }
+
+            /**
+             * Applies partial updates and clamps all physical dimensions safely.
+             */
+            update(patch = {}) {
+                Object.assign(this, patch);
+                this.domainSize = Math.max(200, Math.min(5000, Number(this.domainSize)));
+                this.pillarWidth = Math.max(4, Math.min(40, Number(this.pillarWidth)));
+                this.corridorWidth = Math.max(2, Math.min(24, Number(this.corridorWidth)));
+                this.seamHeight = Math.max(2, Math.min(15, Number(this.seamHeight)));
+                this.horizonCount = Math.max(1, Math.min(MineParameters.MAX_HORIZONS, Math.round(this.horizonCount)));
+                this.verticalInterval = Math.max(10, Math.min(100, Number(this.verticalInterval)));
+                this.zScale = Math.max(1.0, Math.min(3.0, Number(this.zScale)));
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 2. GeomechanicsCalculator — Pure Engineering & Stratigraphic Formulas
+         * =====================================================================
+         */
+        class GeomechanicsCalculator {
+            static getUnitPitch(params) {
+                return params.pillarWidth + params.corridorWidth;
+            }
+
+            static getCellsPerAxis(params) {
+                return params.domainSize / this.getUnitPitch(params);
+            }
+
+            static getFullPillarsPerAxis(params) {
+                return Math.floor(this.getCellsPerAxis(params));
+            }
+
+            static getEdgeRemainder(params) {
+                return params.domainSize - this.getFullPillarsPerAxis(params) * this.getUnitPitch(params);
+            }
+
+            static getArealExtractionRatio(params) {
+                const pitch = this.getUnitPitch(params);
+                return (1 - (params.pillarWidth * params.pillarWidth) / (pitch * pitch)) * 100;
+            }
+
+            static getTotalCenterlineLength(params) {
+                const perHorizonMeters = 2 * this.getCellsPerAxis(params) * params.domainSize;
+                return (perHorizonMeters * params.horizonCount) / 1000;
+            }
+
+            static getNetCorridorLength(params) {
+                const fullAxis = this.getFullPillarsPerAxis(params);
+                const totalArea = params.domainSize * params.domainSize;
+                const pillarArea = (fullAxis * fullAxis) * (params.pillarWidth * params.pillarWidth);
+                const excavatedArea = totalArea - pillarArea;
+                return ((excavatedArea / params.corridorWidth) * params.horizonCount) / 1000;
+            }
+
+            static getHorizonElevations(params, hIdx) {
+                const roof = params.firstHorizonDepth - hIdx * params.verticalInterval;
+                const floor = roof - params.seamHeight;
+                return { roof, floor, mid: (roof + floor) * 0.5 };
+            }
+
+            static getVisualY(params, hIdx) {
+                const trueElev = this.getHorizonElevations(params, hIdx);
+                const visualH1Roof = params.compressOverburden ? -28.0 : params.firstHorizonDepth;
+                const visualInterval = params.verticalInterval * params.zScale;
+                const visualHeight = params.seamHeight * (1 + (params.zScale - 1) * 0.45);
+
+                const roofY = visualH1Roof - hIdx * visualInterval;
+                const floorY = roofY - visualHeight;
+                return {
+                    roofY,
+                    floorY,
+                    centerY: (roofY + floorY) * 0.5,
+                    visualHeight,
+                    roofTrue: trueElev.roof,
+                    floorTrue: trueElev.floor
+                };
+            }
+
+            static getTributaryPillarStressMPa(params, hIdx) {
+                const { mid } = this.getHorizonElevations(params, hIdx);
+                const pitch = this.getUnitPitch(params);
+                const sigmaV_MPa = (Math.abs(mid) * params.overburdenUnitWeight) / 1000;
+                return sigmaV_MPa * Math.pow(pitch / params.pillarWidth, 2);
+            }
+
+            static getExcavatedVolumeM3(params) {
+                const fullAxis = this.getFullPillarsPerAxis(params);
+                const excavatedArea = (params.domainSize * params.domainSize) -
+                    (fullAxis * fullAxis) * (params.pillarWidth * params.pillarWidth);
+                return excavatedArea * params.seamHeight * params.horizonCount;
+            }
+
+            static getPillarVolumeM3(params) {
+                const fullAxis = this.getFullPillarsPerAxis(params);
+                const pillarArea = (fullAxis * fullAxis) * (params.pillarWidth * params.pillarWidth);
+                return pillarArea * params.seamHeight * params.horizonCount;
+            }
+
+            static getOreTonnageMt(params) {
+                return (this.getExcavatedVolumeM3(params) * params.rockDensity) / 1e6;
+            }
+
+            static computeSummary(params) {
+                const pitch = this.getUnitPitch(params);
+                const cellsPerAxis = this.getCellsPerAxis(params);
+                const fullPillarsPerAxis = this.getFullPillarsPerAxis(params);
+                const deepest = this.getHorizonElevations(params, params.horizonCount - 1);
+
+                return {
+                    pitch,
+                    cellsPerAxis,
+                    fullPillarsPerAxis,
+                    pillarsPerHorizon: fullPillarsPerAxis * fullPillarsPerAxis,
+                    totalPillarsAllHorizons: fullPillarsPerAxis * fullPillarsPerAxis * params.horizonCount,
+                    edgeRemainder: this.getEdgeRemainder(params),
+                    extractionRatio: this.getArealExtractionRatio(params),
+                    totalCenterlineKm: this.getTotalCenterlineLength(params),
+                    netCorridorKm: this.getNetCorridorLength(params),
+                    excavatedVolM3: this.getExcavatedVolumeM3(params),
+                    pillarVolM3: this.getPillarVolumeM3(params),
+                    oreTonnageMt: this.getOreTonnageMt(params),
+                    deepestRoof: deepest.roof,
+                    deepestFloor: deepest.floor,
+                    maxStressMPa: this.getTributaryPillarStressMPa(params, params.horizonCount - 1)
+                };
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 3. ProceduralAssetFactory — Shared Textures, Materials & CAD Sprites
+         * =====================================================================
+         */
+        class ProceduralAssetFactory {
+            constructor() {
+                this._textures = new Map();
+                this._materials = new Map();
+            }
+
+            getPillarTopHatchTexture() {
+                if (this._textures.has('pillarTop')) return this._textures.get('pillarTop');
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 256;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = '#452711';
+                ctx.fillRect(0, 0, 256, 256);
+
+                ctx.strokeStyle = 'rgba(217, 119, 6, 0.42)';
+                ctx.lineWidth = 3;
+                for (let i = -256; i < 512; i += 18) {
+                    ctx.beginPath();
+                    ctx.moveTo(i, 0);
+                    ctx.lineTo(i + 256, 256);
+                    ctx.stroke();
+                }
+
+                ctx.strokeStyle = 'rgba(251, 191, 36, 0.88)';
+                ctx.lineWidth = 8;
+                ctx.strokeRect(4, 4, 248, 248);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.RepeatWrapping;
+                this._textures.set('pillarTop', tex);
+                return tex;
+            }
+
+            getPillarSideStrataTexture() {
+                if (this._textures.has('pillarSide')) return this._textures.get('pillarSide');
+
+                const canvas = document.createElement('canvas');
+                canvas.width = 256;
+                canvas.height = 128;
+                const ctx = canvas.getContext('2d');
+
+                const grad = ctx.createLinearGradient(0, 0, 0, 128);
+                grad.addColorStop(0.0, '#593315');
+                grad.addColorStop(0.3, '#78350f');
+                grad.addColorStop(0.55, '#451a03');
+                grad.addColorStop(0.8, '#92400e');
+                grad.addColorStop(1.0, '#452711');
+                ctx.fillStyle = grad;
+                ctx.fillRect(0, 0, 256, 128);
+
+                ctx.fillStyle = 'rgba(251, 191, 36, 0.25)';
+                ctx.fillRect(0, 28, 256, 4);
+                ctx.fillRect(0, 64, 256, 5);
+                ctx.fillRect(0, 98, 256, 3);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                tex.wrapS = THREE.RepeatWrapping;
+                tex.wrapT = THREE.ClampToEdgeWrapping;
+                this._textures.set('pillarSide', tex);
+                return tex;
+            }
+
+            getSharedPillarMaterials() {
+                if (this._materials.has('pillarBox')) return this._materials.get('pillarBox');
+
+                const topTex = this.getPillarTopHatchTexture();
+                const sideTex = this.getPillarSideStrataTexture();
+
+                const mats = [
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, map: sideTex, roughness: 0.72, metalness: 0.1 }),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, map: sideTex, roughness: 0.72, metalness: 0.1 }),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, map: topTex, roughness: 0.58, metalness: 0.15 }),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, map: topTex, roughness: 0.58, metalness: 0.15 }),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, map: sideTex, roughness: 0.72, metalness: 0.1 }),
+                    new THREE.MeshStandardMaterial({ color: 0xffffff, map: sideTex, roughness: 0.72, metalness: 0.1 })
+                ];
+                this._materials.set('pillarBox', mats);
+                return mats;
+            }
+
+            getSharedEquipmentMaterials() {
+                if (this._materials.has('equipmentPalette')) return this._materials.get('equipmentPalette');
+
+                const palette = {
+                    yellow: new THREE.MeshStandardMaterial({ color: 0xeab308, roughness: 0.42, metalness: 0.28 }),
+                    yellowDark: new THREE.MeshStandardMaterial({ color: 0xca8a04, roughness: 0.50, metalness: 0.25 }),
+                    steel: new THREE.MeshStandardMaterial({ color: 0x334155, roughness: 0.48, metalness: 0.65 }),
+                    steelLight: new THREE.MeshStandardMaterial({ color: 0x64748b, roughness: 0.35, metalness: 0.70 }),
+                    darkChassis: new THREE.MeshStandardMaterial({ color: 0x111827, roughness: 0.72, metalness: 0.25 }),
+                    whiteDeck: new THREE.MeshStandardMaterial({ color: 0xe2e8f0, roughness: 0.35, metalness: 0.15 }),
+                    tire: new THREE.MeshStandardMaterial({ color: 0x0f172a, roughness: 0.92, metalness: 0.05 }),
+                    glass: new THREE.MeshStandardMaterial({ color: 0x0ea5e9, roughness: 0.15, metalness: 0.80, transparent: true, opacity: 0.72 }),
+                    ore: new THREE.MeshStandardMaterial({ color: 0xb45309, roughness: 0.88, metalness: 0.05 }),
+                    headlight: new THREE.MeshBasicMaterial({ color: 0xfef9c3 }),
+                    beacon: new THREE.MeshBasicMaterial({ color: 0xf59e0b }),
+                    lidarLens: new THREE.MeshBasicMaterial({ color: 0x22d3ee }),
+                    lidarRay: new THREE.LineBasicMaterial({ color: 0x22d3ee, transparent: true, opacity: 0.78 }),
+                    lidarRing: new THREE.MeshBasicMaterial({ color: 0x06b6d4, transparent: true, opacity: 0.16, side: THREE.DoubleSide, depthWrite: false })
+                };
+                this._materials.set('equipmentPalette', palette);
+                return palette;
+            }
+
+            isSharedMaterial(mat) {
+                const pillarMats = this._materials.get('pillarBox') || [];
+                if (pillarMats.includes(mat)) return true;
+                const eqPalette = this._materials.get('equipmentPalette');
+                if (eqPalette && Object.values(eqPalette).includes(mat)) return true;
+                return false;
+            }
+
+            isSharedTexture(tex) {
+                for (const cached of this._textures.values()) {
+                    if (cached === tex) return true;
+                }
+                return false;
+            }
+
+            createBadgeSprite(title, subtitle, borderColor = '#38bdf8', titleColor = '#7dd3fc', scaleW = 54, scaleH = 19) {
+                const canvas = document.createElement('canvas');
+                canvas.width = 512;
+                canvas.height = 176;
+                const ctx = canvas.getContext('2d');
+
+                ctx.fillStyle = 'rgba(11, 17, 26, 0.94)';
+                ctx.strokeStyle = borderColor;
+                ctx.lineWidth = 5;
+                this._roundRect(ctx, 14, 14, 484, 148, 20);
+                ctx.fill();
+                ctx.stroke();
+
+                ctx.fillStyle = titleColor;
+                ctx.font = 'bold 38px "JetBrains Mono", monospace';
+                ctx.textAlign = 'center';
+                ctx.textBaseline = 'middle';
+                ctx.fillText(title, 256, 64);
+
+                ctx.fillStyle = '#cbd5e1';
+                ctx.font = '25px "JetBrains Mono", monospace';
+                ctx.fillText(subtitle, 256, 118);
+
+                const tex = new THREE.CanvasTexture(canvas);
+                const mat = new THREE.SpriteMaterial({ map: tex, transparent: true, depthTest: false });
+                const sprite = new THREE.Sprite(mat);
+                sprite.scale.set(scaleW, scaleH, 1);
+                return sprite;
+            }
+
+            _roundRect(ctx, x, y, w, h, r) {
+                ctx.beginPath();
+                ctx.moveTo(x + r, y);
+                ctx.arcTo(x + w, y, x + w, y + h, r);
+                ctx.arcTo(x + w, y + h, x, y + h, r);
+                ctx.arcTo(x, y + h, x, y, r);
+                ctx.arcTo(x, y, x + w, y, r);
+                ctx.closePath();
+            }
+
+            dispose() {
+                this._textures.forEach(tex => tex.dispose());
+                this._textures.clear();
+                this._materials.forEach(entry => {
+                    if (Array.isArray(entry)) {
+                        entry.forEach(m => m.dispose());
+                    } else if (entry && typeof entry.dispose === 'function') {
+                        entry.dispose();
+                    } else if (entry && typeof entry === 'object') {
+                        Object.values(entry).forEach(m => m && m.dispose && m.dispose());
+                    }
+                });
+                this._materials.clear();
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 4. HorizonLayerGroup — Single Underground Mining Horizon Geometry
+         * =====================================================================
+         */
+        class HorizonLayerGroup {
+            static STRATIGRAPHIC_NAMES = [
+                'Horizon 1 (Upper Level)',
+                'Horizon 2 (Upper-Mid Level)',
+                'Horizon 3 (Main Middle Level)',
+                'Horizon 4 (Lower-Mid Level)',
+                'Horizon 5 (Deep Basal Level)',
+                'Horizon 6 (Sub-Basal Level A)',
+                'Horizon 7 (Sub-Basal Level B)',
+                'Horizon 8 (Deep Level C)',
+                'Horizon 9 (Deep Target Level)'
+            ];
+
+            constructor(horizonIdx, params, assetFactory) {
+                this.horizonIdx = horizonIdx;
+                this.params = params;
+                this.assetFactory = assetFactory;
+
+                this.group = new THREE.Group();
+                this.instancedPillars = null;
+                this.pillarEdgeLines = null;
+                this.floorMesh = null;
+                this.corridorLines = null;
+                this.remainderGroup = null;
+                this.unitCellGroup = null;
+                this.surveyGroup = null;
+                this.pillarMetadata = [];
+
+                this._build();
+            }
+
+            _build() {
+                const L = this.params.domainSize;
+                const halfL = L / 2;
+                const pitch = GeomechanicsCalculator.getUnitPitch(this.params);
+                const N = GeomechanicsCalculator.getFullPillarsPerAxis(this.params);
+                const remainder = GeomechanicsCalculator.getEdgeRemainder(this.params);
+                const gridSpan = N * pitch;
+
+                const vis = GeomechanicsCalculator.getVisualY(this.params, this.horizonIdx);
+                const stressMPa = GeomechanicsCalculator.getTributaryPillarStressMPa(this.params, this.horizonIdx);
+                const singlePillarVol = this.params.pillarWidth * this.params.pillarWidth * this.params.seamHeight;
+                const singlePillarMass = singlePillarVol * this.params.rockDensity;
+
+                const cIdx = Math.floor(N / 2);
+                const shaft1X = -halfL + cIdx * pitch;
+                const shaft1Z = halfL - cIdx * pitch;
+
+                // 1. Excavated Floor Plane & Perimeter Frame
+                this.floorMesh = new THREE.Mesh(
+                    new THREE.PlaneGeometry(L, L),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x0f172a,
+                        transparent: true,
+                        opacity: 0.65,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    })
+                );
+                this.floorMesh.rotation.x = -Math.PI / 2;
+                this.floorMesh.position.y = vis.floorY;
+                this.group.add(this.floorMesh);
+
+                const perimeterEdges = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(new THREE.BoxGeometry(L, vis.visualHeight, L)),
+                    new THREE.LineBasicMaterial({ color: 0x1e3a5f, transparent: true, opacity: 0.8 })
+                );
+                perimeterEdges.position.y = vis.centerY;
+                this.group.add(perimeterEdges);
+
+                // 2. NE Edge Remainder Zone (Crimson)
+                if (remainder > 0.1) {
+                    this.remainderGroup = new THREE.Group();
+                    this.remainderGroup.visible = this.params.showRemainder;
+                    const remMat = new THREE.MeshBasicMaterial({
+                        color: 0xf43f5e,
+                        transparent: true,
+                        opacity: 0.22,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    });
+
+                    const eastStrip = new THREE.Mesh(new THREE.PlaneGeometry(remainder, L), remMat);
+                    eastStrip.rotation.x = -Math.PI / 2;
+                    eastStrip.position.set(halfL - remainder / 2, vis.floorY + 0.14, 0);
+                    this.remainderGroup.add(eastStrip);
+
+                    const northStrip = new THREE.Mesh(new THREE.PlaneGeometry(gridSpan, remainder), remMat);
+                    northStrip.rotation.x = -Math.PI / 2;
+                    northStrip.position.set(-halfL + gridSpan / 2, vis.floorY + 0.14, -halfL + remainder / 2);
+                    this.remainderGroup.add(northStrip);
+
+                    this.group.add(this.remainderGroup);
+                }
+
+                // 3. Instanced Pillars + Batched Edge Wireframe
+                const totalPillars = N * N;
+                const pillarGeo = new THREE.BoxGeometry(this.params.pillarWidth, vis.visualHeight, this.params.pillarWidth);
+                this.instancedPillars = new THREE.InstancedMesh(
+                    pillarGeo,
+                    this.assetFactory.getSharedPillarMaterials(),
+                    totalPillars
+                );
+                this.instancedPillars.visible = this.params.showPillars;
+                this.instancedPillars.frustumCulled = false;
+                this.instancedPillars.userData = { horizonIdx: this.horizonIdx };
+
+                const dummy = new THREE.Object3D();
+                const instanceColor = new THREE.Color();
+                const hw = this.params.pillarWidth / 2;
+                const hh = vis.visualHeight / 2;
+                const corners = [
+                    [-hw, -hh, -hw], [hw, -hh, -hw], [hw, -hh, hw], [-hw, -hh, hw],
+                    [-hw,  hh, -hw], [hw,  hh, -hw], [hw,  hh, hw], [-hw,  hh, hw]
+                ];
+                const edgePairs = [
+                    0,1, 1,2, 2,3, 3,0,
+                    4,5, 5,6, 6,7, 7,4,
+                    0,4, 1,5, 2,6, 3,7
+                ];
+                const edgeVerts = new Float32Array(totalPillars * edgePairs.length * 3);
+                let ptr = 0;
+
+                const depthShade = 1.0 - this.horizonIdx * 0.045;
+                let idx = 0;
+
+                for (let row = 0; row < N; row++) {
+                    for (let col = 0; col < N; col++) {
+                        const easting = col * pitch + pitch / 2;
+                        const northing = row * pitch + pitch / 2;
+                        const posX = -halfL + easting;
+                        const posZ = halfL - northing;
+
+                        dummy.position.set(posX, vis.centerY, posZ);
+                        dummy.updateMatrix();
+                        this.instancedPillars.setMatrixAt(idx, dummy.matrix);
+
+                        const microTint = depthShade * (0.96 + ((row + col) % 3) * 0.02);
+                        instanceColor.setRGB(microTint, microTint, microTint);
+                        this.instancedPillars.setColorAt(idx, instanceColor);
+
+                        this.pillarMetadata[idx] = {
+                            horizonIdx: this.horizonIdx,
+                            instanceId: idx,
+                            id: `H${this.horizonIdx + 1}-P[${row},${col}]`,
+                            levelName: HorizonLayerGroup.STRATIGRAPHIC_NAMES[this.horizonIdx] || `Horizon ${this.horizonIdx + 1}`,
+                            row,
+                            col,
+                            easting,
+                            northing,
+                            posX,
+                            posZ,
+                            centerY: vis.centerY,
+                            visualHeight: vis.visualHeight,
+                            roofTrue: vis.roofTrue,
+                            floorTrue: vis.floorTrue,
+                            stressMPa,
+                            volumeM3: singlePillarVol,
+                            massTons: singlePillarMass,
+                            baseColor: instanceColor.clone()
+                        };
+
+                        for (let e = 0; e < edgePairs.length; e++) {
+                            const c = corners[edgePairs[e]];
+                            edgeVerts[ptr++] = posX + c[0];
+                            edgeVerts[ptr++] = vis.centerY + c[1];
+                            edgeVerts[ptr++] = posZ + c[2];
+                        }
+                        idx++;
+                    }
+                }
+
+                this.instancedPillars.instanceMatrix.needsUpdate = true;
+                if (this.instancedPillars.instanceColor) {
+                    this.instancedPillars.instanceColor.needsUpdate = true;
+                }
+                this.group.add(this.instancedPillars);
+
+                const edgeGeo = new THREE.BufferGeometry();
+                edgeGeo.setAttribute('position', new THREE.BufferAttribute(edgeVerts, 3));
+                this.pillarEdgeLines = new THREE.LineSegments(
+                    edgeGeo,
+                    new THREE.LineBasicMaterial({ color: 0xd97706, transparent: true, opacity: 0.65 })
+                );
+                this.pillarEdgeLines.visible = this.params.showPillars;
+                this.group.add(this.pillarEdgeLines);
+
+                // 4. Batched Corridor Centerline Grid
+                this.corridorLines = new THREE.Group();
+                this.corridorLines.visible = this.params.showCorridors;
+                const nsVerts = [];
+                const ewVerts = [];
+                for (let i = 0; i <= N; i++) {
+                    const cx = -halfL + i * pitch;
+                    nsVerts.push(cx, vis.floorY + 0.12, -halfL, cx, vis.floorY + 0.12, halfL);
+                    const cz = halfL - i * pitch;
+                    ewVerts.push(-halfL, vis.floorY + 0.12, cz, halfL, vis.floorY + 0.12, cz);
+                }
+
+                const nsGeo = new THREE.BufferGeometry();
+                nsGeo.setAttribute('position', new THREE.Float32BufferAttribute(nsVerts, 3));
+                this.corridorLines.add(new THREE.LineSegments(nsGeo, new THREE.LineBasicMaterial({
+                    color: 0x38bdf8,
+                    transparent: true,
+                    opacity: 0.36
+                })));
+
+                const ewGeo = new THREE.BufferGeometry();
+                ewGeo.setAttribute('position', new THREE.Float32BufferAttribute(ewVerts, 3));
+                this.corridorLines.add(new THREE.LineSegments(ewGeo, new THREE.LineBasicMaterial({
+                    color: 0x10b981,
+                    transparent: true,
+                    opacity: 0.36
+                })));
+                this.group.add(this.corridorLines);
+
+                // 5. Unit Cell Cutout (P × P)
+                this.unitCellGroup = new THREE.Group();
+                this.unitCellGroup.visible = this.params.showCallouts;
+                const cellX = shaft1X + pitch / 2;
+                const cellZ = shaft1Z - pitch / 2;
+
+                const cellCage = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(new THREE.BoxGeometry(pitch, vis.visualHeight + 0.4, pitch)),
+                    new THREE.LineBasicMaterial({ color: 0x10b981, transparent: true, opacity: 0.92 })
+                );
+                cellCage.position.set(cellX, vis.centerY, cellZ);
+                this.unitCellGroup.add(cellCage);
+
+                if (this.horizonIdx === 0) {
+                    const badge = this.assetFactory.createBadgeSprite(
+                        `UNIT CELL P = ${pitch} m`,
+                        `Wp=${this.params.pillarWidth}m + Wc=${this.params.corridorWidth}m (H=${this.params.seamHeight}m)`,
+                        '#10b981',
+                        '#6ee7b7',
+                        50,
+                        18
+                    );
+                    badge.position.set(cellX, vis.roofY + 12, cellZ);
+                    this.unitCellGroup.add(badge);
+                }
+                this.group.add(this.unitCellGroup);
+
+                // 6. Survey Gyro Traverse Loop
+                this.surveyGroup = new THREE.Group();
+                this.surveyGroup.visible = this.params.showSurvey;
+                const step = Math.max(2, Math.floor(N / 5)) * pitch;
+                const loopPts = [
+                    new THREE.Vector3(shaft1X, vis.floorY + 0.45, shaft1Z),
+                    new THREE.Vector3(Math.min(halfL - pitch, shaft1X + step), vis.floorY + 0.45, shaft1Z),
+                    new THREE.Vector3(Math.min(halfL - pitch, shaft1X + step), vis.floorY + 0.45, Math.max(-halfL + pitch, shaft1Z - step)),
+                    new THREE.Vector3(Math.max(-halfL + pitch, shaft1X - step), vis.floorY + 0.45, Math.max(-halfL + pitch, shaft1Z - step)),
+                    new THREE.Vector3(Math.max(-halfL + pitch, shaft1X - step), vis.floorY + 0.45, Math.min(halfL - pitch, shaft1Z + step)),
+                    new THREE.Vector3(shaft1X, vis.floorY + 0.45, shaft1Z)
+                ];
+
+                this.surveyGroup.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints(loopPts),
+                    new THREE.LineBasicMaterial({ color: 0x10b981 })
+                ));
+
+                const stationGeo = new THREE.OctahedronGeometry(1.5, 0);
+                const stationMat = new THREE.MeshBasicMaterial({ color: 0x34d399 });
+                loopPts.slice(0, -1).forEach(pt => {
+                    const marker = new THREE.Mesh(stationGeo, stationMat);
+                    marker.position.copy(pt);
+                    this.surveyGroup.add(marker);
+                });
+                this.group.add(this.surveyGroup);
+            }
+
+            setInstanceColor(instanceId, color) {
+                if (!this.instancedPillars || instanceId == null) return;
+                this.instancedPillars.setColorAt(instanceId, color);
+                if (this.instancedPillars.instanceColor) {
+                    this.instancedPillars.instanceColor.needsUpdate = true;
+                }
+            }
+
+            restoreInstanceColor(instanceId) {
+                const meta = this.pillarMetadata[instanceId];
+                if (meta) this.setInstanceColor(instanceId, meta.baseColor);
+            }
+
+            applyLayerToggles(params) {
+                if (this.instancedPillars) this.instancedPillars.visible = params.showPillars;
+                if (this.pillarEdgeLines) this.pillarEdgeLines.visible = params.showPillars;
+                if (this.corridorLines) this.corridorLines.visible = params.showCorridors && params.gridWireframe;
+                if (this.remainderGroup) this.remainderGroup.visible = params.showRemainder;
+                if (this.unitCellGroup) this.unitCellGroup.visible = params.showCallouts;
+                if (this.surveyGroup) this.surveyGroup.visible = params.showSurvey;
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 5. ShaftSystemGroup — Surface Datum 0.0m, Shafts, Strata & Rulers
+         * =====================================================================
+         */
+        class ShaftSystemGroup {
+            constructor(params, assetFactory) {
+                this.params = params;
+                this.assetFactory = assetFactory;
+
+                this.surfaceGroup = new THREE.Group();
+                this.shaftGroup = new THREE.Group();
+                this.strataGroup = new THREE.Group();
+                this.rulerGroup = new THREE.Group();
+
+                this._build();
+            }
+
+            _build() {
+                const L = this.params.domainSize;
+                const halfL = L / 2;
+                const pitch = GeomechanicsCalculator.getUnitPitch(this.params);
+                const N = GeomechanicsCalculator.getFullPillarsPerAxis(this.params);
+
+                const cIdx = Math.floor(N / 2);
+                const shaft1X = -halfL + cIdx * pitch;
+                const shaft1Z = halfL - cIdx * pitch;
+
+                const ventIdx = Math.max(2, N - Math.max(3, Math.floor(N * 0.1)));
+                const shaft2X = -halfL + ventIdx * pitch;
+                const shaft2Z = halfL - ventIdx * pitch;
+
+                const deepestVis = GeomechanicsCalculator.getVisualY(this.params, this.params.horizonCount - 1);
+                const sumpY = deepestVis.floorY - 16;
+
+                this._buildGroundSurface(L, halfL, shaft1X, shaft1Z);
+                this._buildShaftColumns(shaft1X, shaft1Z, shaft2X, shaft2Z, sumpY, deepestVis.floorTrue);
+                this._buildInterburdenStrata(L);
+                this._buildDepthRulers(halfL, sumpY);
+            }
+
+            _buildGroundSurface(L, halfL, shaft1X, shaft1Z) {
+                const divisions = Math.min(100, Math.max(20, Math.round(L / 50)));
+                this.surfaceGroup.add(new THREE.GridHelper(L, divisions, 0x38bdf8, 0x1e293b));
+
+                const plane = new THREE.Mesh(
+                    new THREE.PlaneGeometry(L, L),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x0f172a,
+                        transparent: true,
+                        opacity: 0.25,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    })
+                );
+                plane.rotation.x = -Math.PI / 2;
+                this.surfaceGroup.add(plane);
+
+                this.surfaceGroup.add(new THREE.LineSegments(
+                    new THREE.EdgesGeometry(new THREE.BoxGeometry(L, 0.5, L)),
+                    new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.78 })
+                ));
+
+                // SHAFT-1 (BASE) Surface Collar Pad
+                const collarGeo = new THREE.BoxGeometry(24, 1.5, 24);
+                const collarPad = new THREE.Mesh(
+                    collarGeo,
+                    new THREE.MeshStandardMaterial({ color: 0x1e293b, roughness: 0.7 })
+                );
+                collarPad.position.set(shaft1X, 0.75, shaft1Z);
+                collarPad.add(new THREE.LineSegments(
+                    new THREE.EdgesGeometry(collarGeo),
+                    new THREE.LineBasicMaterial({ color: 0xf43f5e })
+                ));
+                this.surfaceGroup.add(collarPad);
+
+                const surfaceBadge = this.assetFactory.createBadgeSprite(
+                    'GROUND LEVEL 0.0 m',
+                    `${L.toLocaleString()}m × ${L.toLocaleString()}m (${((L * L) / 1e6).toFixed(2)} km²)`,
+                    '#38bdf8',
+                    '#7dd3fc',
+                    62,
+                    21
+                );
+                surfaceBadge.position.set(-halfL - 26, 16, halfL);
+                this.surfaceGroup.add(surfaceBadge);
+            }
+
+            _buildShaftColumns(shaft1X, shaft1Z, shaft2X, shaft2Z, sumpY, deepestFloorTrue) {
+                this.shaftGroup.visible = this.params.showShaft;
+                const totalLen = Math.abs(sumpY);
+                const r1 = Math.max(3.6, this.params.corridorWidth * 0.45);
+                const r2 = Math.max(2.4, this.params.corridorWidth * 0.30);
+
+                // Main Production Shaft-1 (Base)
+                const shaft1Cyl = new THREE.Mesh(
+                    new THREE.CylinderGeometry(r1, r1, totalLen, 24, 1, true),
+                    new THREE.MeshBasicMaterial({
+                        color: 0xf43f5e,
+                        transparent: true,
+                        opacity: 0.25,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    })
+                );
+                shaft1Cyl.position.set(shaft1X, sumpY / 2, shaft1Z);
+                this.shaftGroup.add(shaft1Cyl);
+
+                this.shaftGroup.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(shaft1X, 18, shaft1Z),
+                        new THREE.Vector3(shaft1X, sumpY, shaft1Z)
+                    ]),
+                    new THREE.LineBasicMaterial({ color: 0xf43f5e })
+                ));
+
+                // Exhaust Vent Shaft-2
+                const shaft2Cyl = new THREE.Mesh(
+                    new THREE.CylinderGeometry(r2, r2, totalLen, 16, 1, true),
+                    new THREE.MeshBasicMaterial({
+                        color: 0x38bdf8,
+                        transparent: true,
+                        opacity: 0.20,
+                        side: THREE.DoubleSide,
+                        depthWrite: false
+                    })
+                );
+                shaft2Cyl.position.set(shaft2X, sumpY / 2, shaft2Z);
+                this.shaftGroup.add(shaft2Cyl);
+
+                const shaft2Line = new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(shaft2X, 12, shaft2Z),
+                        new THREE.Vector3(shaft2X, sumpY, shaft2Z)
+                    ]),
+                    new THREE.LineDashedMaterial({ color: 0x38bdf8, dashSize: 6, gapSize: 4 })
+                );
+                shaft2Line.computeLineDistances();
+                this.shaftGroup.add(shaft2Line);
+
+                // Horizon Station Landings
+                const landingGeo = new THREE.BoxGeometry(this.params.corridorWidth * 1.45, 0.5, this.params.corridorWidth * 1.45);
+                const landingMat = new THREE.MeshBasicMaterial({ color: 0xf43f5e, transparent: true, opacity: 0.42 });
+                const landingEdges = new THREE.EdgesGeometry(landingGeo);
+                const landingEdgeMat = new THREE.LineBasicMaterial({ color: 0xfda4af });
+
+                for (let h = 0; h < this.params.horizonCount; h++) {
+                    const vis = GeomechanicsCalculator.getVisualY(this.params, h);
+                    const pad = new THREE.Mesh(landingGeo, landingMat);
+                    pad.position.set(shaft1X, vis.floorY + 0.25, shaft1Z);
+                    pad.add(new THREE.LineSegments(landingEdges, landingEdgeMat));
+                    this.shaftGroup.add(pad);
+                }
+
+                const s1Badge = this.assetFactory.createBadgeSprite(
+                    'SHAFT-1 (BASE)',
+                    `Ø ${(r1 * 2).toFixed(1)}m • 0m to ${deepestFloorTrue.toFixed(0)}m`,
+                    '#f43f5e',
+                    '#fda4af',
+                    56,
+                    19
+                );
+                s1Badge.position.set(shaft1X, 24, shaft1Z);
+                this.shaftGroup.add(s1Badge);
+
+                const s2Badge = this.assetFactory.createBadgeSprite(
+                    'VENT SHAFT-2',
+                    `Ø ${(r2 * 2).toFixed(1)}m EXHAUST`,
+                    '#38bdf8',
+                    '#7dd3fc',
+                    46,
+                    16
+                );
+                s2Badge.position.set(shaft2X, 18, shaft2Z);
+                this.shaftGroup.add(s2Badge);
+            }
+
+            _buildInterburdenStrata(L) {
+                this.strataGroup.visible = this.params.showStrata;
+
+                const h1Vis = GeomechanicsCalculator.getVisualY(this.params, 0);
+                const obThick = Math.abs(h1Vis.roofY);
+                if (obThick > 1) {
+                    const obGeo = new THREE.BoxGeometry(L, obThick, L);
+                    const obMesh = new THREE.Mesh(
+                        obGeo,
+                        new THREE.MeshBasicMaterial({ color: 0x0f172a, transparent: true, opacity: 0.08, depthWrite: false })
+                    );
+                    obMesh.position.y = -obThick / 2;
+                    obMesh.add(new THREE.LineSegments(
+                        new THREE.EdgesGeometry(obGeo),
+                        new THREE.LineBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.5 })
+                    ));
+                    this.strataGroup.add(obMesh);
+                }
+
+                for (let h = 0; h < this.params.horizonCount - 1; h++) {
+                    const upper = GeomechanicsCalculator.getVisualY(this.params, h);
+                    const lower = GeomechanicsCalculator.getVisualY(this.params, h + 1);
+                    const thick = Math.abs(upper.floorY - lower.roofY);
+                    if (thick > 0.2) {
+                        const ibGeo = new THREE.BoxGeometry(L, thick, L);
+                        const ibMesh = new THREE.Mesh(
+                            ibGeo,
+                            new THREE.MeshBasicMaterial({ color: 0x1e293b, transparent: true, opacity: 0.12, depthWrite: false })
+                        );
+                        ibMesh.position.y = (upper.floorY + lower.roofY) * 0.5;
+                        ibMesh.add(new THREE.LineSegments(
+                            new THREE.EdgesGeometry(ibGeo),
+                            new THREE.LineBasicMaterial({ color: 0x334155, transparent: true, opacity: 0.45 })
+                        ));
+                        this.strataGroup.add(ibMesh);
+                    }
+                }
+            }
+
+            _buildDepthRulers(halfL, sumpY) {
+                this.rulerGroup.visible = this.params.showRulers;
+                const rx = -halfL - 22;
+                const rz = halfL + 22;
+
+                this.rulerGroup.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(rx, 8, rz),
+                        new THREE.Vector3(rx, sumpY, rz)
+                    ]),
+                    new THREE.LineBasicMaterial({ color: 0x38bdf8, transparent: true, opacity: 0.8 })
+                ));
+
+                this.rulerGroup.add(new THREE.Line(
+                    new THREE.BufferGeometry().setFromPoints([
+                        new THREE.Vector3(rx - 10, 0, rz),
+                        new THREE.Vector3(rx + 20, 0, rz)
+                    ]),
+                    new THREE.LineBasicMaterial({ color: 0x10b981 })
+                ));
+
+                for (let h = 0; h < this.params.horizonCount; h++) {
+                    const vis = GeomechanicsCalculator.getVisualY(this.params, h);
+                    this.rulerGroup.add(new THREE.Line(
+                        new THREE.BufferGeometry().setFromPoints([
+                            new THREE.Vector3(rx - 10, vis.roofY, rz),
+                            new THREE.Vector3(rx + 22, vis.roofY, rz)
+                        ]),
+                        new THREE.LineBasicMaterial({ color: 0x38bdf8 })
+                    ));
+
+                    const label = this.assetFactory.createBadgeSprite(
+                        `H${h + 1}: ${vis.roofTrue.toFixed(0)} m`,
+                        `Floor ${vis.floorTrue.toFixed(0)}m (H=${this.params.seamHeight}m)`,
+                        '#38bdf8',
+                        '#7dd3fc',
+                        50,
+                        17
+                    );
+                    label.position.set(rx - 32, vis.roofY, rz);
+                    this.rulerGroup.add(label);
+                }
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 6. EquipmentMeshFactory — Procedural Mining Fleet & SLAM Rovers
+         * =====================================================================
+         */
+        class EquipmentMeshFactory {
+            constructor(assetFactory) {
+                this.m = assetFactory.getSharedEquipmentMaterials();
+            }
+
+            _addWheels(parent, positions, radius, width, matHub) {
+                const wheels = [];
+                const tireGeo = new THREE.CylinderGeometry(radius, radius, width, 16);
+                const hubGeo = new THREE.CylinderGeometry(radius * 0.48, radius * 0.48, width + 0.06, 12);
+                tireGeo.rotateZ(Math.PI / 2);
+                hubGeo.rotateZ(Math.PI / 2);
+
+                positions.forEach(([x, y, z]) => {
+                    const wheelGroup = new THREE.Group();
+                    wheelGroup.position.set(x, y, z);
+                    wheelGroup.add(new THREE.Mesh(tireGeo, this.m.tire));
+                    wheelGroup.add(new THREE.Mesh(hubGeo, matHub));
+                    parent.add(wheelGroup);
+                    wheels.push(wheelGroup);
+                });
+                return wheels;
+            }
+
+            createLHDLoader() {
+                const m = this.m;
+                const root = new THREE.Group();
+
+                const rearBody = new THREE.Mesh(new THREE.BoxGeometry(2.1, 1.35, 3.2), m.yellow);
+                rearBody.position.set(0, 1.35, -1.65);
+                root.add(rearBody);
+
+                const frontFrame = new THREE.Mesh(new THREE.BoxGeometry(1.75, 0.95, 2.2), m.yellowDark);
+                frontFrame.position.set(0, 1.15, 0.95);
+                root.add(frontFrame);
+
+                const cab = new THREE.Mesh(new THREE.BoxGeometry(1.45, 0.95, 1.35), m.glass);
+                cab.position.set(0, 2.35, -0.35);
+                root.add(cab);
+
+                const cabRoof = new THREE.Mesh(new THREE.BoxGeometry(1.6, 0.14, 1.5), m.yellow);
+                cabRoof.position.set(0, 2.86, -0.35);
+                root.add(cabRoof);
+
+                const boomL = new THREE.Mesh(new THREE.BoxGeometry(0.24, 0.34, 2.1), m.yellow);
+                boomL.position.set(-0.78, 1.25, 2.3);
+                boomL.rotation.x = 0.18;
+                const boomR = boomL.clone();
+                boomR.position.x = 0.78;
+                root.add(boomL, boomR);
+
+                const bucket = new THREE.Mesh(new THREE.BoxGeometry(2.45, 1.05, 1.45), m.yellowDark);
+                bucket.position.set(0, 0.72, 3.45);
+                bucket.rotation.x = 0.25;
+                root.add(bucket);
+
+                const ore = new THREE.Mesh(new THREE.DodecahedronGeometry(0.75, 0), m.ore);
+                ore.scale.set(1.4, 0.65, 0.85);
+                ore.position.set(0, 1.25, 3.35);
+                root.add(ore);
+
+                const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 0.1), m.headlight);
+                hlL.position.set(-0.7, 1.65, 2.08);
+                const hlR = hlL.clone();
+                hlR.position.x = 0.7;
+                root.add(hlL, hlR);
+
+                const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.26, 10), m.beacon);
+                beacon.position.set(0, 3.05, -0.35);
+                root.add(beacon);
+
+                const wheels = this._addWheels(root, [
+                    [-1.18, 0.82, -1.65], [1.18, 0.82, -1.65],
+                    [-1.18, 0.82,  1.15], [1.18, 0.82,  1.15]
+                ], 0.82, 0.56, m.yellow);
+
+                return { mesh: root, wheels, beacon, rotatingParts: [], scanRaysGroup: null };
+            }
+
+            createHaulTruck() {
+                const m = this.m;
+                const root = new THREE.Group();
+
+                const hood = new THREE.Mesh(new THREE.BoxGeometry(2.25, 1.35, 2.3), m.yellow);
+                hood.position.set(0, 1.38, 2.25);
+                root.add(hood);
+
+                const cab = new THREE.Mesh(new THREE.BoxGeometry(2.0, 1.05, 1.25), m.glass);
+                cab.position.set(0, 2.35, 1.15);
+                root.add(cab);
+
+                const cabRoof = new THREE.Mesh(new THREE.BoxGeometry(2.15, 0.15, 1.45), m.yellow);
+                cabRoof.position.set(0, 2.92, 1.15);
+                root.add(cabRoof);
+
+                const bed = new THREE.Mesh(new THREE.BoxGeometry(2.45, 1.35, 3.85), m.yellowDark);
+                bed.position.set(0, 1.82, -1.65);
+                root.add(bed);
+
+                const oreMound = new THREE.Mesh(new THREE.DodecahedronGeometry(1.15, 0), m.ore);
+                oreMound.scale.set(1.0, 0.55, 1.55);
+                oreMound.position.set(0, 2.55, -1.65);
+                root.add(oreMound);
+
+                const hlL = new THREE.Mesh(new THREE.BoxGeometry(0.32, 0.2, 0.1), m.headlight);
+                hlL.position.set(-0.78, 1.5, 3.42);
+                const hlR = hlL.clone();
+                hlR.position.x = 0.78;
+                root.add(hlL, hlR);
+
+                const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.26, 10), m.beacon);
+                beacon.position.set(0, 3.12, 1.15);
+                root.add(beacon);
+
+                const wheels = this._addWheels(root, [
+                    [-1.24, 0.86,  1.85], [1.24, 0.86,  1.85],
+                    [-1.24, 0.86, -2.05], [1.24, 0.86, -2.05]
+                ], 0.86, 0.62, m.yellow);
+
+                return { mesh: root, wheels, beacon, rotatingParts: [], scanRaysGroup: null };
+            }
+
+            createRoadheader() {
+                const m = this.m;
+                const root = new THREE.Group();
+
+                const trackL = new THREE.Mesh(new THREE.BoxGeometry(0.65, 0.82, 3.8), m.tire);
+                trackL.position.set(-1.1, 0.42, -0.35);
+                const trackR = trackL.clone();
+                trackR.position.x = 1.1;
+                root.add(trackL, trackR);
+
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.9, 1.15, 3.5), m.yellow);
+                body.position.set(0, 1.25, -0.55);
+                root.add(body);
+
+                const cab = new THREE.Mesh(new THREE.BoxGeometry(1.05, 0.95, 1.15), m.glass);
+                cab.position.set(0.45, 2.25, -0.95);
+                root.add(cab);
+
+                const apron = new THREE.Mesh(new THREE.BoxGeometry(2.65, 0.25, 1.35), m.darkChassis);
+                apron.position.set(0, 0.28, 2.05);
+                apron.rotation.x = 0.2;
+                root.add(apron);
+
+                const boom = new THREE.Mesh(new THREE.CylinderGeometry(0.32, 0.46, 2.9, 12), m.yellowDark);
+                boom.rotation.x = Math.PI / 2 - 0.36;
+                boom.position.set(0, 2.05, 1.85);
+                root.add(boom);
+
+                const cutterHead = new THREE.Group();
+                cutterHead.position.set(0, 2.6, 3.25);
+                cutterHead.rotation.x = Math.PI / 2 - 0.36;
+                cutterHead.add(new THREE.Mesh(new THREE.ConeGeometry(0.62, 1.25, 12), m.steel));
+
+                const pickGeo = new THREE.BoxGeometry(0.14, 0.14, 0.18);
+                for (let i = 0; i < 8; i++) {
+                    const ang = (i / 8) * Math.PI * 2;
+                    const pick = new THREE.Mesh(pickGeo, m.whiteDeck);
+                    pick.position.set(Math.cos(ang) * 0.42, -0.15, Math.sin(ang) * 0.42);
+                    cutterHead.add(pick);
+                }
+                root.add(cutterHead);
+
+                const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.26, 10), m.beacon);
+                beacon.position.set(0.45, 2.85, -0.95);
+                root.add(beacon);
+
+                return { mesh: root, wheels: [], beacon, rotatingParts: [cutterHead], scanRaysGroup: null };
+            }
+
+            createDrillingJumbo() {
+                const m = this.m;
+                const root = new THREE.Group();
+
+                const body = new THREE.Mesh(new THREE.BoxGeometry(1.95, 1.15, 3.6), m.yellow);
+                body.position.set(0, 1.25, -0.8);
+                root.add(body);
+
+                const cab = new THREE.Mesh(new THREE.BoxGeometry(1.4, 0.9, 1.2), m.glass);
+                cab.position.set(0, 2.2, -0.2);
+                root.add(cab);
+
+                [-0.62, 0.62].forEach(xOff => {
+                    const arm = new THREE.Mesh(new THREE.BoxGeometry(0.2, 0.22, 2.8), m.yellowDark);
+                    arm.position.set(xOff, 1.55, 2.0);
+                    arm.rotation.x = -0.12;
+                    root.add(arm);
+
+                    const rail = new THREE.Mesh(new THREE.BoxGeometry(0.16, 0.16, 3.4), m.steelLight);
+                    rail.position.set(xOff, 1.85, 3.15);
+                    root.add(rail);
+                });
+
+                const beacon = new THREE.Mesh(new THREE.CylinderGeometry(0.14, 0.16, 0.26, 10), m.beacon);
+                beacon.position.set(0, 2.82, -0.2);
+                root.add(beacon);
+
+                const wheels = this._addWheels(root, [
+                    [-1.12, 0.68, -1.80], [1.12, 0.68, -1.80],
+                    [-1.12, 0.68,  0.45], [1.12, 0.68,  0.45]
+                ], 0.68, 0.46, m.yellow);
+
+                return { mesh: root, wheels, beacon, rotatingParts: [], scanRaysGroup: null };
+            }
+
+            createSlamRover() {
+                const m = this.m;
+                const root = new THREE.Group();
+
+                const chassis = new THREE.Mesh(new THREE.BoxGeometry(1.35, 0.62, 2.05), m.darkChassis);
+                chassis.position.set(0, 0.62, 0);
+                root.add(chassis);
+
+                const fenderL = new THREE.Mesh(new THREE.BoxGeometry(0.28, 0.18, 2.18), m.yellow);
+                fenderL.position.set(-0.76, 0.94, 0);
+                fenderL.rotation.z = 0.22;
+                const fenderR = fenderL.clone();
+                fenderR.position.x = 0.76;
+                fenderR.rotation.z = -0.22;
+                root.add(fenderL, fenderR);
+
+                const frontBumper = new THREE.Mesh(new THREE.BoxGeometry(1.62, 0.22, 0.22), m.yellow);
+                frontBumper.position.set(0, 0.88, 1.06);
+                root.add(frontBumper);
+
+                const topPlate = new THREE.Mesh(new THREE.BoxGeometry(1.56, 0.1, 2.06), m.whiteDeck);
+                topPlate.position.set(0, 1.06, 0);
+                root.add(topPlate);
+
+                const postGeo = new THREE.BoxGeometry(0.09, 0.92, 0.09);
+                [[-0.38, 0.35], [0.38, 0.35], [-0.38, -0.35], [0.38, -0.35]].forEach(([px, pz]) => {
+                    const post = new THREE.Mesh(postGeo, m.steel);
+                    post.position.set(px, 1.54, pz);
+                    root.add(post);
+                });
+
+                const mastDeck = new THREE.Mesh(new THREE.BoxGeometry(0.95, 0.08, 0.92), m.whiteDeck);
+                mastDeck.position.set(0, 2.02, 0);
+                root.add(mastDeck);
+
+                // Vertical 3D LiDAR Cylinder (Top)
+                const vLidarGroup = new THREE.Group();
+                vLidarGroup.position.set(0, 2.34, 0);
+                vLidarGroup.add(new THREE.Mesh(new THREE.CylinderGeometry(0.22, 0.22, 0.52, 16), m.steelLight));
+                const vLens = new THREE.Mesh(new THREE.CylinderGeometry(0.23, 0.23, 0.14, 16), m.lidarLens);
+                vLidarGroup.add(vLens);
+                root.add(vLidarGroup);
+
+                // Horizontal Forward-Facing 3D LiDAR Cylinder
+                const hLidar = new THREE.Mesh(new THREE.CylinderGeometry(0.2, 0.2, 0.48, 16), m.steelLight);
+                hLidar.rotation.x = Math.PI / 2;
+                hLidar.position.set(0, 1.68, 0.48);
+                root.add(hLidar);
+
+                const hLens = new THREE.Mesh(new THREE.CylinderGeometry(0.21, 0.21, 0.12, 16), m.lidarLens);
+                hLens.rotation.x = Math.PI / 2;
+                hLens.position.set(0, 1.68, 0.56);
+                root.add(hLens);
+
+                // Corner Stereo Cameras
+                const camGeo = new THREE.BoxGeometry(0.18, 0.16, 0.22);
+                [[-0.42, 2.14, 0.32], [0.42, 2.14, 0.32], [-0.42, 2.14, -0.32], [0.42, 2.14, -0.32]].forEach(([cx, cy, cz]) => {
+                    const cam = new THREE.Mesh(camGeo, m.steel);
+                    cam.position.set(cx, cy, cz);
+                    root.add(cam);
+                });
+
+                // 360° Cyan LiDAR Scan Beams + Sweeping Ring
+                const scanRaysGroup = new THREE.Group();
+                scanRaysGroup.position.set(0, 2.34, 0);
+                const rayCount = 24;
+                const rayVerts = [];
+                for (let i = 0; i < rayCount; i++) {
+                    const ang = (i / rayCount) * Math.PI * 2;
+                    const len = 5.2 + (i % 3) * 1.4;
+                    rayVerts.push(0, 0, 0, Math.cos(ang) * len, -0.65 + (i % 2) * 0.9, Math.sin(ang) * len);
+                }
+                const rayGeo = new THREE.BufferGeometry();
+                rayGeo.setAttribute('position', new THREE.Float32BufferAttribute(rayVerts, 3));
+                scanRaysGroup.add(new THREE.LineSegments(rayGeo, m.lidarRay));
+
+                const ringMesh = new THREE.Mesh(new THREE.RingGeometry(0.4, 5.8, 32), m.lidarRing);
+                ringMesh.rotation.x = -Math.PI / 2;
+                ringMesh.position.y = -0.3;
+                scanRaysGroup.add(ringMesh);
+                root.add(scanRaysGroup);
+
+                const wheels = this._addWheels(root, [
+                    [-0.86, 0.48,  0.66], [0.86, 0.48,  0.66],
+                    [-0.86, 0.48, -0.66], [0.86, 0.48, -0.66]
+                ], 0.48, 0.34, m.steel);
+
+                return {
+                    mesh: root,
+                    wheels,
+                    beacon: vLens,
+                    rotatingParts: [vLidarGroup],
+                    scanRaysGroup
+                };
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 7. FleetAgent — Autonomous Corridor Navigation & SLAM Scanning Unit
+         * =====================================================================
+         */
+        class FleetAgent {
+            constructor(config) {
+                this.id = config.id;
+                this.type = config.type;
+                this.horizonIdx = config.horizonIdx;
+                this.speed = config.speed;
+                this.params = config.params;
+                this.model = config.model;
+
+                this.pitch = GeomechanicsCalculator.getUnitPitch(this.params);
+                this.N = GeomechanicsCalculator.getFullPillarsPerAxis(this.params);
+                this.halfL = this.params.domainSize / 2;
+                this.vis = GeomechanicsCalculator.getVisualY(this.params, this.horizonIdx);
+
+                this.col = config.col;
+                this.row = config.row;
+                this.dirX = config.dirX;
+                this.dirZ = config.dirZ;
+                this.nextCol = this.col;
+                this.nextRow = this.row;
+                this.progress = 0;
+
+                this.currentYaw = 0;
+                this.targetYaw = 0;
+                this.scanTimer = 0;
+                this.beaconPhase = Math.random() * Math.PI * 2;
+
+                this._pickNextIntersection(true);
+                this._syncTransform(1.0);
+            }
+
+            _gridToWorld(col, row) {
+                return {
+                    x: -this.halfL + col * this.pitch,
+                    z: this.halfL - row * this.pitch
+                };
+            }
+
+            _pickNextIntersection(initial = false) {
+                const minB = 1;
+                const maxB = Math.max(2, this.N - 1);
+                const dirs = [
+                    { dx:  1, dr:  0 },
+                    { dx: -1, dr:  0 },
+                    { dx:  0, dr:  1 },
+                    { dx:  0, dr: -1 }
+                ];
+
+                const valid = dirs.filter(d => {
+                    const nc = this.col + d.dx;
+                    const nr = this.row + d.dr;
+                    return nc >= minB && nc <= maxB && nr >= minB && nr <= maxB;
+                });
+
+                const nonReverse = valid.filter(d => !(d.dx === -this.dirX && d.dr === -this.dirZ));
+                const candidates = nonReverse.length > 0 ? nonReverse : valid;
+
+                let chosen = candidates[0] || { dx: 0, dr: 0 };
+                if (candidates.length > 0) {
+                    const straight = candidates.find(d => d.dx === this.dirX && d.dr === this.dirZ);
+                    if (!initial && straight && Math.random() < 0.55) {
+                        chosen = straight;
+                    } else {
+                        chosen = candidates[Math.floor(Math.random() * candidates.length)];
+                    }
+                }
+
+                this.dirX = chosen.dx;
+                this.dirZ = chosen.dr;
+                this.nextCol = this.col + this.dirX;
+                this.nextRow = this.row + this.dirZ;
+                this.progress = 0;
+
+                this.targetYaw = Math.atan2(this.dirX, -this.dirZ);
+                if (initial) this.currentYaw = this.targetYaw;
+            }
+
+            _syncTransform(turnAlpha) {
+                const p0 = this._gridToWorld(this.col, this.row);
+                const p1 = this._gridToWorld(this.nextCol, this.nextRow);
+
+                const laneOffset = this.type === 'slam_rover' ? 0.0 : Math.min(1.4, this.params.corridorWidth * 0.16);
+                const vx = this.dirX;
+                const vz = -this.dirZ;
+                const rightX = -vz * laneOffset;
+                const rightZ = vx * laneOffset;
+
+                const wx = p0.x + (p1.x - p0.x) * this.progress + rightX;
+                const wz = p0.z + (p1.z - p0.z) * this.progress + rightZ;
+                this.model.mesh.position.set(wx, this.vis.floorY + 0.05, wz);
+
+                let diff = this.targetYaw - this.currentYaw;
+                while (diff > Math.PI) diff -= Math.PI * 2;
+                while (diff < -Math.PI) diff += Math.PI * 2;
+                this.currentYaw += diff * Math.min(1, turnAlpha);
+                this.model.mesh.rotation.y = this.currentYaw;
+            }
+
+            update(dt, slamCloudCallback) {
+                if (!this.model.mesh.visible) return;
+
+                this.progress += (this.speed * dt) / Math.max(1, this.pitch);
+                if (this.progress >= 1.0) {
+                    this.col = this.nextCol;
+                    this.row = this.nextRow;
+                    this._pickNextIntersection(false);
+                }
+
+                this._syncTransform(dt * 7.5);
+
+                const wheelSpin = this.speed * dt * 1.65;
+                this.model.wheels.forEach(w => { w.rotation.x += wheelSpin; });
+                this.model.rotatingParts.forEach(part => { part.rotation.y += dt * 6.5; });
+
+                if (this.type === 'slam_rover' && this.model.scanRaysGroup) {
+                    this.model.scanRaysGroup.rotation.y += dt * 4.8;
+                    this.scanTimer += dt;
+                    if (this.scanTimer >= 0.09 && slamCloudCallback) {
+                        this.scanTimer = 0;
+                        const pos = this.model.mesh.position;
+                        const halfCorr = this.params.corridorWidth * 0.48;
+                        const floorY = this.vis.floorY;
+                        const ceilH = this.vis.visualHeight;
+
+                        const perpX = Math.cos(this.currentYaw);
+                        const perpZ = -Math.sin(this.currentYaw);
+                        for (let s = -1; s <= 1; s += 2) {
+                            const jitter = (Math.random() - 0.5) * 1.8;
+                            const fwdX = Math.sin(this.currentYaw) * jitter;
+                            const fwdZ = Math.cos(this.currentYaw) * jitter;
+                            const hFrac = 0.12 + Math.random() * 0.78;
+                            slamCloudCallback(
+                                pos.x + perpX * halfCorr * s + fwdX,
+                                floorY + ceilH * hFrac,
+                                pos.z + perpZ * halfCorr * s + fwdZ,
+                                hFrac
+                            );
+                        }
+                    }
+                }
+
+                if (this.model.beacon && this.type !== 'slam_rover') {
+                    this.beaconPhase += dt * 7.5;
+                    const s = 0.85 + Math.sin(this.beaconPhase) * 0.25;
+                    this.model.beacon.scale.set(s, s, s);
+                }
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 8. FleetSimulationManager — Multi-Horizon Fleet & SLAM Point Cloud
+         * =====================================================================
+         */
+        class FleetSimulationManager {
+            static MAX_SLAM_POINTS = 5000;
+
+            constructor(params, assetFactory) {
+                this.params = params;
+                this.meshFactory = new EquipmentMeshFactory(assetFactory);
+                this.fleetGroup = new THREE.Group();
+                this.slamCloudGroup = new THREE.Group();
+                this.agents = [];
+
+                this.slamPointCount = 0;
+                this.slamWriteIdx = 0;
+                this.slamPositions = new Float32Array(FleetSimulationManager.MAX_SLAM_POINTS * 3);
+                this.slamColors = new Float32Array(FleetSimulationManager.MAX_SLAM_POINTS * 3);
+                this.slamPointsMesh = null;
+
+                this._initSlamPointCloud();
+                this._spawnFleet();
+            }
+
+            _initSlamPointCloud() {
+                const geo = new THREE.BufferGeometry();
+                geo.setAttribute('position', new THREE.BufferAttribute(this.slamPositions, 3));
+                geo.setAttribute('color', new THREE.BufferAttribute(this.slamColors, 3));
+                geo.setDrawRange(0, 0);
+
+                const mat = new THREE.PointsMaterial({
+                    size: 0.95,
+                    vertexColors: true,
+                    transparent: true,
+                    opacity: 0.88,
+                    sizeAttenuation: true
+                });
+
+                this.slamPointsMesh = new THREE.Points(geo, mat);
+                this.slamPointsMesh.frustumCulled = false;
+                this.slamCloudGroup.add(this.slamPointsMesh);
+            }
+
+            _appendSlamPoint(x, y, z, heightFrac) {
+                const i3 = this.slamWriteIdx * 3;
+                this.slamPositions[i3] = x;
+                this.slamPositions[i3 + 1] = y;
+                this.slamPositions[i3 + 2] = z;
+
+                this.slamColors[i3] = 0.08 + heightFrac * 0.20;
+                this.slamColors[i3 + 1] = 0.88 - heightFrac * 0.12;
+                this.slamColors[i3 + 2] = 0.55 + heightFrac * 0.45;
+
+                this.slamWriteIdx = (this.slamWriteIdx + 1) % FleetSimulationManager.MAX_SLAM_POINTS;
+                if (this.slamPointCount < FleetSimulationManager.MAX_SLAM_POINTS) {
+                    this.slamPointCount++;
+                }
+
+                const geo = this.slamPointsMesh.geometry;
+                geo.attributes.position.needsUpdate = true;
+                geo.attributes.color.needsUpdate = true;
+                geo.setDrawRange(0, this.slamPointCount);
+            }
+
+            _spawnFleet() {
+                const N = GeomechanicsCalculator.getFullPillarsPerAxis(this.params);
+                const c = Math.max(2, Math.min(N - 2, Math.floor(N / 2)));
+                const clampG = v => Math.max(1, Math.min(Math.max(1, N - 1), v));
+
+                const h1Specs = [
+                    { type: 'lhd',        col: clampG(c),     row: clampG(c + 1), dx:  1, dr:  0, speed: 6.2 },
+                    { type: 'haul_truck', col: clampG(c - 1), row: clampG(c),     dx:  0, dr:  1, speed: 7.4 },
+                    { type: 'roadheader', col: clampG(c + 1), row: clampG(c - 1), dx:  0, dr: -1, speed: 3.2 },
+                    { type: 'jumbo',      col: clampG(c - 2), row: clampG(c + 1), dx:  1, dr:  0, speed: 4.1 },
+                    { type: 'slam_rover', col: clampG(c),     row: clampG(c),     dx:  0, dr:  1, speed: 5.5 },
+                    { type: 'slam_rover', col: clampG(c + 1), row: clampG(c + 1), dx: -1, dr:  0, speed: 5.2 },
+                    { type: 'slam_rover', col: clampG(c - 1), row: clampG(c - 1), dx:  1, dr:  0, speed: 5.0 }
+                ];
+
+                h1Specs.forEach((spec, i) => this._createAgent(0, spec, `H1-${spec.type.toUpperCase()}-${i + 1}`));
+
+                for (let h = 1; h < this.params.horizonCount; h++) {
+                    const offset = (h % 3) - 1;
+                    const hSpecs = [
+                        { type: h % 2 === 0 ? 'lhd' : 'haul_truck', col: clampG(c + offset), row: clampG(c - offset), dx: 1, dr:  0, speed: 6.5 },
+                        { type: 'slam_rover',                       col: clampG(c - offset), row: clampG(c + 1),      dx: 0, dr: -1, speed: 5.4 }
+                    ];
+                    hSpecs.forEach((spec, i) => this._createAgent(h, spec, `H${h + 1}-${spec.type.toUpperCase()}-${i + 1}`));
+                }
+            }
+
+            _createAgent(horizonIdx, spec, id) {
+                let model;
+                if (spec.type === 'lhd') model = this.meshFactory.createLHDLoader();
+                else if (spec.type === 'haul_truck') model = this.meshFactory.createHaulTruck();
+                else if (spec.type === 'roadheader') model = this.meshFactory.createRoadheader();
+                else if (spec.type === 'jumbo') model = this.meshFactory.createDrillingJumbo();
+                else model = this.meshFactory.createSlamRover();
+
+                const agent = new FleetAgent({
+                    id,
+                    type: spec.type,
+                    horizonIdx,
+                    col: spec.col,
+                    row: spec.row,
+                    dirX: spec.dx,
+                    dirZ: spec.dr,
+                    speed: spec.speed,
+                    params: this.params,
+                    model
+                });
+
+                this.agents.push(agent);
+                this.fleetGroup.add(model.mesh);
+            }
+
+            applyVisibility(params) {
+                this.fleetGroup.visible = params.showFleet;
+                this.slamCloudGroup.visible = params.showFleet && params.showSlamPointCloud;
+
+                this.agents.forEach(agent => {
+                    const horizonVisible = params.soloTarget !== null
+                        ? params.soloTarget === agent.horizonIdx
+                        : params.showHorizons[agent.horizonIdx];
+
+                    agent.model.mesh.visible = params.showFleet && horizonVisible;
+                    if (agent.model.scanRaysGroup) {
+                        agent.model.scanRaysGroup.visible = params.showSlamPointCloud;
+                    }
+                });
+            }
+
+            getPrimarySlamAnchor() {
+                const rover = this.agents.find(a => a.type === 'slam_rover' && a.horizonIdx === 0) || this.agents[0];
+                return rover ? rover.model.mesh.position.clone() : new THREE.Vector3(0, -102, 0);
+            }
+
+            update(dt) {
+                if (!this.fleetGroup.visible) return;
+                const emitPt = this.slamCloudGroup.visible
+                    ? (x, y, z, hFrac) => this._appendSlamPoint(x, y, z, hFrac)
+                    : null;
+
+                for (let i = 0; i < this.agents.length; i++) {
+                    this.agents[i].update(dt, emitPt);
+                }
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 9. MineWorldManager — Three.js Scene, Camera, Raycast, Walkthrough & GC
+         * =====================================================================
+         */
+        class MineWorldManager {
+            constructor(containerEl, params, callbacks) {
+                this.container = containerEl;
+                this.params = params;
+                this.callbacks = callbacks;
+
+                this.assetFactory = new ProceduralAssetFactory();
+                this.horizonLayers = [];
+                this.shaftSystem = null;
+                this.fleetManager = null;
+
+                this.activeHorizonIdx = 0;
+                this.selectedPillar = null;
+                this.hoveredPillar = null;
+                this.isWalkthrough = false;
+                this.walkHorizonIdx = 0;
+
+                this.COLOR_HOVER = new THREE.Color(0x38bdf8);
+                this.COLOR_SELECTED = new THREE.Color(0x10b981);
+
+                this._initThree();
+                this._initSelectionCage();
+                this._bindInput();
+            }
+
+            _initThree() {
+                this.scene = new THREE.Scene();
+                this.scene.background = new THREE.Color(0x0b111a);
+                this.scene.fog = new THREE.FogExp2(0x0b111a, 0.00036);
+
+                this.camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 1.0, 10000);
+                this.camera.position.set(780, 140, 920);
+
+                this.renderer = new THREE.WebGLRenderer({ antialias: true, powerPreference: 'high-performance' });
+                this.renderer.setSize(window.innerWidth, window.innerHeight);
+                this.renderer.setPixelRatio(Math.min(window.devicePixelRatio, 2));
+                this.container.appendChild(this.renderer.domElement);
+
+                this.controls = new THREE.OrbitControls(this.camera, this.renderer.domElement);
+                this.controls.enableDamping = true;
+                this.controls.dampingFactor = 0.06;
+                this.controls.maxDistance = 7500;
+                this.controls.minDistance = 5;
+                this.controls.target.set(0, -180, 0);
+
+                this.scene.add(new THREE.AmbientLight(0xe2e8f0, 0.85));
+
+                const keyLight = new THREE.DirectionalLight(0xfffbeb, 1.05);
+                keyLight.position.set(600, 800, 500);
+                this.scene.add(keyLight);
+
+                const rimLight = new THREE.DirectionalLight(0x38bdf8, 0.55);
+                rimLight.position.set(-600, -700, -500);
+                this.scene.add(rimLight);
+
+                this.worldRoot = new THREE.Group();
+                this.scene.add(this.worldRoot);
+
+                this.raycaster = new THREE.Raycaster();
+                this.pointerNDC = new THREE.Vector2();
+                this.pointerDownPos = { x: 0, y: 0 };
+                this.keys = {};
+                this.cameraTween = null;
+                this.clock = new THREE.Clock();
+                this._fpsFrames = 0;
+                this._fpsAccum = 0;
+                this._animFrameId = null;
+            }
+
+            _initSelectionCage() {
+                this.selectionCage = new THREE.LineSegments(
+                    new THREE.EdgesGeometry(new THREE.BoxGeometry(1, 1, 1)),
+                    new THREE.LineBasicMaterial({ color: 0x10b981 })
+                );
+                this.selectionCage.visible = false;
+                this.scene.add(this.selectionCage);
+            }
+
+            _disposeGroup(group) {
+                group.traverse(node => {
+                    if (node.geometry) {
+                        node.geometry.dispose();
+                    }
+                    if (node.material) {
+                        const list = Array.isArray(node.material) ? node.material : [node.material];
+                        list.forEach(m => {
+                            if (!m || this.assetFactory.isSharedMaterial(m)) return;
+                            if (m.map && !this.assetFactory.isSharedTexture(m.map)) {
+                                m.map.dispose();
+                            }
+                            m.dispose();
+                        });
+                    }
+                });
+            }
+
+            rebuildWorld() {
+                while (this.worldRoot.children.length > 0) {
+                    const child = this.worldRoot.children[0];
+                    this.worldRoot.remove(child);
+                    this._disposeGroup(child);
+                }
+
+                this.horizonLayers = [];
+                this.selectedPillar = null;
+                this.hoveredPillar = null;
+                this.selectionCage.visible = false;
+
+                this.shaftSystem = new ShaftSystemGroup(this.params, this.assetFactory);
+                this.worldRoot.add(
+                    this.shaftSystem.surfaceGroup,
+                    this.shaftSystem.shaftGroup,
+                    this.shaftSystem.strataGroup,
+                    this.shaftSystem.rulerGroup
+                );
+
+                for (let h = 0; h < this.params.horizonCount; h++) {
+                    const layer = new HorizonLayerGroup(h, this.params, this.assetFactory);
+                    this.horizonLayers.push(layer);
+                    this.worldRoot.add(layer.group);
+                }
+
+                this.fleetManager = new FleetSimulationManager(this.params, this.assetFactory);
+                this.worldRoot.add(this.fleetManager.fleetGroup, this.fleetManager.slamCloudGroup);
+
+                this.applyVisibilityState();
+            }
+
+            applyVisibilityState() {
+                if (!this.shaftSystem) return;
+
+                if (this.params.soloTarget !== null) {
+                    this.shaftSystem.surfaceGroup.visible = (this.params.soloTarget === 'surface');
+                    this.horizonLayers.forEach((layer, idx) => {
+                        layer.group.visible = (this.params.soloTarget === idx);
+                    });
+                } else {
+                    this.shaftSystem.surfaceGroup.visible = this.params.showSurface;
+                    this.horizonLayers.forEach((layer, idx) => {
+                        layer.group.visible = this.params.showHorizons[idx];
+                    });
+                }
+
+                this.shaftSystem.shaftGroup.visible = this.params.showShaft;
+                this.shaftSystem.strataGroup.visible = this.params.showStrata && this.params.gridWireframe;
+                this.shaftSystem.rulerGroup.visible = this.params.showRulers;
+
+                this.horizonLayers.forEach(layer => layer.applyLayerToggles(this.params));
+
+                if (this.fleetManager) {
+                    this.fleetManager.applyVisibility(this.params);
+                }
+            }
+
+            clearPillarSelection() {
+                if (this.selectedPillar) {
+                    const layer = this.horizonLayers[this.selectedPillar.horizonIdx];
+                    if (layer) layer.restoreInstanceColor(this.selectedPillar.instanceId);
+                    this.selectedPillar = null;
+                }
+                this.selectionCage.visible = false;
+            }
+
+            setWalkthroughHorizon(hIdx) {
+                this.walkHorizonIdx = Math.max(0, Math.min(this.params.horizonCount - 1, hIdx));
+                this.activeHorizonIdx = this.walkHorizonIdx;
+
+                const L = this.params.domainSize;
+                const halfL = L / 2;
+                const pitch = GeomechanicsCalculator.getUnitPitch(this.params);
+                const N = GeomechanicsCalculator.getFullPillarsPerAxis(this.params);
+                const cIdx = Math.floor(N / 2);
+                const corrX = -halfL + cIdx * pitch;
+                const corrZ = halfL - cIdx * pitch;
+                const vis = GeomechanicsCalculator.getVisualY(this.params, this.walkHorizonIdx);
+
+                const eyeY = vis.floorY + Math.min(2.6, vis.visualHeight * 0.55);
+                this.cameraTween = {
+                    pos: new THREE.Vector3(corrX, eyeY, corrZ + 18),
+                    target: new THREE.Vector3(corrX, eyeY, corrZ - 24),
+                    alpha: 0
+                };
+            }
+
+            setCameraPreset(preset) {
+                const L = this.params.domainSize;
+                const halfL = L / 2;
+                const pitch = GeomechanicsCalculator.getUnitPitch(this.params);
+                const N = GeomechanicsCalculator.getFullPillarsPerAxis(this.params);
+                const cIdx = Math.floor(N / 2);
+                const shaft1X = -halfL + cIdx * pitch;
+                const shaft1Z = halfL - cIdx * pitch;
+
+                const h1Vis = GeomechanicsCalculator.getVisualY(this.params, 0);
+                const hMidVis = GeomechanicsCalculator.getVisualY(this.params, Math.floor(this.params.horizonCount / 2));
+                const hLastVis = GeomechanicsCalculator.getVisualY(this.params, this.params.horizonCount - 1);
+                const midY = (0 + hLastVis.floorY) * 0.5;
+
+                this.isWalkthrough = (preset === 'walk');
+
+                if (preset === 'walk') {
+                    this.setWalkthroughHorizon(this.walkHorizonIdx);
+                } else if (preset === 'iso') {
+                    this.cameraTween = {
+                        pos: new THREE.Vector3(L * 0.78, Math.max(120, L * 0.16), L * 0.92),
+                        target: new THREE.Vector3(0, midY, 0),
+                        alpha: 0
+                    };
+                } else if (preset === 'top') {
+                    this.cameraTween = {
+                        pos: new THREE.Vector3(0, L * 1.45, 0.01),
+                        target: new THREE.Vector3(0, h1Vis.centerY, 0),
+                        alpha: 0
+                    };
+                } else if (preset === 'profile') {
+                    this.cameraTween = {
+                        pos: new THREE.Vector3(0, midY, L * 1.35),
+                        target: new THREE.Vector3(0, midY, 0),
+                        alpha: 0
+                    };
+                } else if (preset === 'h1') {
+                    this.activeHorizonIdx = 0;
+                    this.cameraTween = {
+                        pos: new THREE.Vector3(shaft1X + L * 0.28, h1Vis.roofY + 95, shaft1Z + L * 0.28),
+                        target: new THREE.Vector3(shaft1X, h1Vis.centerY, shaft1Z),
+                        alpha: 0
+                    };
+                } else if (preset === 'shaft') {
+                    this.cameraTween = {
+                        pos: new THREE.Vector3(shaft1X + 65, hMidVis.centerY + 42, shaft1Z + 75),
+                        target: new THREE.Vector3(shaft1X, hMidVis.centerY, shaft1Z),
+                        alpha: 0
+                    };
+                } else if (preset === 'fleet') {
+                    this.activeHorizonIdx = 0;
+                    const anchor = this.fleetManager
+                        ? this.fleetManager.getPrimarySlamAnchor()
+                        : new THREE.Vector3(shaft1X, h1Vis.floorY + 2, shaft1Z);
+                    this.cameraTween = {
+                        pos: new THREE.Vector3(anchor.x + 26, anchor.y + 18, anchor.z + 32),
+                        target: new THREE.Vector3(anchor.x, anchor.y + 1.5, anchor.z),
+                        alpha: 0
+                    };
+                }
+            }
+
+            _raycastPillars(clientX, clientY) {
+                const rect = this.renderer.domElement.getBoundingClientRect();
+                this.pointerNDC.x = ((clientX - rect.left) / rect.width) * 2 - 1;
+                this.pointerNDC.y = -((clientY - rect.top) / rect.height) * 2 + 1;
+
+                this.raycaster.setFromCamera(this.pointerNDC, this.camera);
+
+                const visibleMeshes = this.horizonLayers
+                    .filter(l => l.group.visible && l.instancedPillars && l.instancedPillars.visible)
+                    .map(l => l.instancedPillars);
+
+                return this.raycaster.intersectObjects(visibleMeshes, false);
+            }
+
+            _bindInput() {
+                const dom = this.renderer.domElement;
+
+                dom.addEventListener('pointerdown', e => {
+                    this.pointerDownPos = { x: e.clientX, y: e.clientY };
+                });
+
+                dom.addEventListener('pointermove', e => {
+                    const hits = this._raycastPillars(e.clientX, e.clientY);
+                    const topHit = hits[0];
+                    const nextHover = topHit
+                        ? { horizonIdx: topHit.object.userData.horizonIdx, instanceId: topHit.instanceId }
+                        : null;
+
+                    const isSame = (a, b) => a && b && a.horizonIdx === b.horizonIdx && a.instanceId === b.instanceId;
+
+                    if (
+                        this.hoveredPillar &&
+                        !isSame(this.hoveredPillar, nextHover) &&
+                        !isSame(this.hoveredPillar, this.selectedPillar)
+                    ) {
+                        const prevLayer = this.horizonLayers[this.hoveredPillar.horizonIdx];
+                        if (prevLayer) prevLayer.restoreInstanceColor(this.hoveredPillar.instanceId);
+                    }
+
+                    this.hoveredPillar = nextHover;
+                    if (nextHover && !isSame(nextHover, this.selectedPillar)) {
+                        const layer = this.horizonLayers[nextHover.horizonIdx];
+                        if (layer) layer.setInstanceColor(nextHover.instanceId, this.COLOR_HOVER);
+                    }
+
+                    dom.style.cursor = nextHover ? 'pointer' : 'grab';
+
+                    const activeH = Math.min(this.activeHorizonIdx, this.params.horizonCount - 1);
+                    const vis = GeomechanicsCalculator.getVisualY(this.params, activeH);
+                    const plane = new THREE.Plane(new THREE.Vector3(0, 1, 0), -vis.floorY);
+                    const hitPt = new THREE.Vector3();
+
+                    if (this.raycaster.ray.intersectPlane(plane, hitPt) && this.callbacks.onCursorMove) {
+                        const halfL = this.params.domainSize / 2;
+                        const pitch = GeomechanicsCalculator.getUnitPitch(this.params);
+                        const easting = hitPt.x + halfL;
+                        const northing = halfL - hitPt.z;
+                        this.callbacks.onCursorMove({
+                            easting,
+                            northing,
+                            col: Math.floor(easting / pitch),
+                            row: Math.floor(northing / pitch),
+                            activeHorizonIdx: activeH,
+                            floorTrue: vis.floorTrue
+                        });
+                    }
+                });
+
+                dom.addEventListener('pointerup', e => {
+                    const dist = Math.hypot(e.clientX - this.pointerDownPos.x, e.clientY - this.pointerDownPos.y);
+                    if (dist > 5) return;
+
+                    const hits = this._raycastPillars(e.clientX, e.clientY);
+                    if (hits.length > 0) {
+                        const hit = hits[0];
+                        const hIdx = hit.object.userData.horizonIdx;
+                        const instId = hit.instanceId;
+                        const layer = this.horizonLayers[hIdx];
+                        const meta = layer.pillarMetadata[instId];
+
+                        this.clearPillarSelection();
+                        this.selectedPillar = { horizonIdx: hIdx, instanceId: instId };
+                        this.activeHorizonIdx = hIdx;
+                        layer.setInstanceColor(instId, this.COLOR_SELECTED);
+
+                        this.selectionCage.scale.set(
+                            this.params.pillarWidth + 0.65,
+                            meta.visualHeight + 0.65,
+                            this.params.pillarWidth + 0.65
+                        );
+                        this.selectionCage.position.set(meta.posX, meta.centerY, meta.posZ);
+                        this.selectionCage.visible = true;
+
+                        if (this.callbacks.onPillarSelect) {
+                            this.callbacks.onPillarSelect(meta);
+                        }
+                    }
+                });
+
+                window.addEventListener('keydown', e => { this.keys[e.code] = true; });
+                window.addEventListener('keyup', e => { this.keys[e.code] = false; });
+
+                window.addEventListener('resize', () => {
+                    this.camera.aspect = window.innerWidth / window.innerHeight;
+                    this.camera.updateProjectionMatrix();
+                    this.renderer.setSize(window.innerWidth, window.innerHeight);
+                });
+            }
+
+            _updateWalkthrough(dt) {
+                if (!this.isWalkthrough) return;
+                const speed = 35 * dt;
+                const forward = new THREE.Vector3();
+                this.camera.getWorldDirection(forward);
+                forward.y = 0;
+                forward.normalize();
+
+                const right = new THREE.Vector3().crossVectors(forward, new THREE.Vector3(0, 1, 0)).normalize();
+                const delta = new THREE.Vector3();
+
+                if (this.keys['KeyW'] || this.keys['ArrowUp']) delta.add(forward);
+                if (this.keys['KeyS'] || this.keys['ArrowDown']) delta.sub(forward);
+                if (this.keys['KeyD'] || this.keys['ArrowRight']) delta.add(right);
+                if (this.keys['KeyA'] || this.keys['ArrowLeft']) delta.sub(right);
+
+                if (delta.lengthSq() > 0) {
+                    delta.normalize().multiplyScalar(speed);
+                    this.camera.position.add(delta);
+                    this.controls.target.add(delta);
+                }
+            }
+
+            startRenderLoop() {
+                const tick = () => {
+                    this._animFrameId = requestAnimationFrame(tick);
+                    const dt = Math.min(this.clock.getDelta(), 0.1);
+
+                    if (this.cameraTween) {
+                        this.cameraTween.alpha = Math.min(1, this.cameraTween.alpha + dt * 2.8);
+                        const ease = 1 - Math.pow(1 - this.cameraTween.alpha, 3);
+                        this.camera.position.lerp(this.cameraTween.pos, ease * 0.18 + 0.04);
+                        this.controls.target.lerp(this.cameraTween.target, ease * 0.18 + 0.04);
+                        if (this.cameraTween.alpha >= 1) this.cameraTween = null;
+                    }
+
+                    this._updateWalkthrough(dt);
+                    if (this.fleetManager) {
+                        this.fleetManager.update(dt);
+                    }
+                    this.controls.update();
+                    this.renderer.render(this.scene, this.camera);
+
+                    this._fpsFrames++;
+                    this._fpsAccum += dt;
+                    if (this._fpsAccum >= 0.5) {
+                        const fps = Math.round(this._fpsFrames / this._fpsAccum);
+                        if (this.callbacks.onFpsUpdate) this.callbacks.onFpsUpdate(fps);
+                        if (this.callbacks.onFleetUpdate && this.fleetManager) {
+                            this.callbacks.onFleetUpdate(this.fleetManager.agents.length, this.fleetManager.slamPointCount);
+                        }
+                        this._fpsFrames = 0;
+                        this._fpsAccum = 0;
+                    }
+                };
+                tick();
+            }
+
+            dispose() {
+                if (this._animFrameId !== null) {
+                    cancelAnimationFrame(this._animFrameId);
+                }
+                while (this.worldRoot.children.length > 0) {
+                    const child = this.worldRoot.children[0];
+                    this.worldRoot.remove(child);
+                    this._disposeGroup(child);
+                }
+                this.assetFactory.dispose();
+                this.renderer.dispose();
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 10. CADInterfaceController — DOM Bindings, Readouts, HUD & Inspector
+         * =====================================================================
+         */
+        class CADInterfaceController {
+            constructor(params, worldManager) {
+                this.params = params;
+                this.world = worldManager;
+                this._bindEvents();
+            }
+
+            refreshAll() {
+                this._renderHorizonToggles();
+                this._updateMetricReadouts();
+            }
+
+            _renderHorizonToggles() {
+                const container = document.getElementById('horizon-layers-list');
+                container.innerHTML = '';
+
+                const paletteColors = ['#f59e0b', '#d97706', '#ea580c', '#c2410c', '#9a3412', '#b45309', '#a16207', '#854d0e', '#713f12'];
+
+                for (let h = 0; h < this.params.horizonCount; h++) {
+                    const elev = GeomechanicsCalculator.getHorizonElevations(this.params, h);
+                    const isChecked = this.params.showHorizons[h];
+                    const isSolo = this.params.soloTarget === h;
+
+                    const row = document.createElement('div');
+                    row.className = `flex items-center justify-between py-1 px-1 rounded-lg transition ${isSolo ? 'bg-sky-500/15 border border-sky-500/40' : 'hover:bg-slate-800/50'}`;
+                    row.innerHTML = `
+                        <label class="flex items-center gap-2 cursor-pointer flex-1 min-w-0">
+                            <input type="checkbox" data-h-toggle="${h}" class="cad-checkbox" ${isChecked ? 'checked' : ''} ${this.params.soloTarget !== null ? 'disabled' : ''}>
+                            <span class="w-2.5 h-2.5 rounded-sm shrink-0 border border-amber-300/60" style="background:${paletteColors[h]}"></span>
+                            <div class="truncate">
+                                <div class="text-[11px] font-medium text-slate-200 truncate">Horizon ${h + 1}</div>
+                                <div class="text-[9px] font-mono-tech text-slate-400">${elev.roof.toFixed(0)}m to ${elev.floor.toFixed(0)}m</div>
+                            </div>
+                        </label>
+                        <button type="button" data-solo="${h}" class="solo-btn ${isSolo ? 'active' : ''} px-1.5 py-0.5 rounded border border-slate-700 bg-slate-900 text-[9px] font-mono-tech text-slate-300 hover:border-sky-400 transition">SOLO</button>
+                    `;
+                    container.appendChild(row);
+                }
+
+                container.querySelectorAll('input[data-h-toggle]').forEach(cb => {
+                    cb.addEventListener('change', e => {
+                        const idx = parseInt(e.target.dataset.hToggle, 10);
+                        this.params.showHorizons[idx] = e.target.checked;
+                        this.world.activeHorizonIdx = idx;
+                        this.world.applyVisibilityState();
+                    });
+                });
+
+                document.querySelectorAll('button[data-solo]').forEach(btn => {
+                    btn.onclick = () => {
+                        const raw = btn.dataset.solo;
+                        const target = raw === 'surface' ? 'surface' : parseInt(raw, 10);
+                        this.params.soloTarget = (this.params.soloTarget === target) ? null : target;
+                        if (typeof target === 'number') this.world.activeHorizonIdx = target;
+                        this.world.applyVisibilityState();
+                        this._renderHorizonToggles();
+                        this._syncSoloButtons();
+                    };
+                });
+            }
+
+            _syncSoloButtons() {
+                document.querySelectorAll('button[data-solo]').forEach(btn => {
+                    const raw = btn.dataset.solo;
+                    const target = raw === 'surface' ? 'surface' : parseInt(raw, 10);
+                    btn.classList.toggle('active', this.params.soloTarget === target);
+                });
+            }
+
+            _updateMetricReadouts() {
+                const s = GeomechanicsCalculator.computeSummary(this.params);
+                const L = this.params.domainSize;
+
+                document.getElementById('header-depth-badge').innerHTML = `${this.params.horizonCount} Horizons<br>0m to ${s.deepestFloor.toFixed(0)}m`;
+                document.getElementById('badge-pitch').textContent = `Pitch P = ${s.pitch} m`;
+                document.getElementById('val-domain').textContent = `${L.toLocaleString()} × ${L.toLocaleString()} m`;
+                document.getElementById('val-domain-slider').textContent = `${L.toLocaleString()} m`;
+                document.getElementById('slider-domain').value = L;
+
+                document.getElementById('val-wp').textContent = `${this.params.pillarWidth} m`;
+                document.getElementById('val-wc').textContent = `${this.params.corridorWidth} m`;
+                document.getElementById('val-height').textContent = `${this.params.seamHeight.toFixed(1)} m`;
+                document.getElementById('val-hcount').textContent = `${this.params.horizonCount} Horizons`;
+                document.getElementById('val-interval').textContent = `${this.params.verticalInterval} m`;
+                document.getElementById('slider-interval').value = this.params.verticalInterval;
+                document.getElementById('val-zscale').textContent = `${this.params.zScale.toFixed(1)}×`;
+                document.getElementById('lbl-deepest-strat').innerHTML = `Deepest: <strong class="text-rose-400 font-mono-tech">${s.deepestFloor.toFixed(1)} m</strong>`;
+
+                document.getElementById('metric-cells-axis').textContent = `${s.cellsPerAxis.toFixed(2)} cells`;
+                document.getElementById('metric-extraction').textContent = `${s.extractionRatio.toFixed(2)}%`;
+                document.getElementById('bar-extraction').style.width = `${Math.min(100, Math.max(0, s.extractionRatio))}%`;
+
+                document.getElementById('metric-pillars').textContent = `${s.pillarsPerHorizon.toLocaleString()} (${s.edgeRemainder.toFixed(0)} m)`;
+                document.getElementById('metric-total-centerline').textContent = `${s.totalCenterlineKm.toFixed(2)} km`;
+                document.getElementById('metric-net-corridor').textContent = `${s.netCorridorKm.toFixed(2)} km`;
+                document.getElementById('metric-excavated-vol').textContent = `${Math.round(s.excavatedVolM3).toLocaleString()} m³`;
+                document.getElementById('metric-pillar-vol').textContent = `${Math.round(s.pillarVolM3).toLocaleString()} m³`;
+                document.getElementById('metric-tonnage').textContent = `${s.oreTonnageMt.toFixed(2)} Mt`;
+                document.getElementById('metric-max-stress').textContent = `${s.maxStressMPa.toFixed(2)} MPa`;
+
+                document.getElementById('lbl-pillars-toggle').textContent = `Intact Pillars (${this.params.pillarWidth}×${this.params.pillarWidth} m)`;
+                document.getElementById('lbl-corridors-toggle').textContent = `Corridor Centerlines (${this.params.corridorWidth} m)`;
+                document.getElementById('lbl-remainder-toggle').textContent = `NE Remainder Zone (${s.edgeRemainder.toFixed(0)} m)`;
+                document.getElementById('lbl-callouts-toggle').textContent = `Unit Cell Cutout (${s.pitch}×${s.pitch} m)`;
+                document.getElementById('status-instances').textContent = `${s.totalPillarsAllHorizons.toLocaleString()} Pillars`;
+
+                document.querySelectorAll('.domain-btn').forEach(btn => {
+                    btn.classList.toggle('active', parseInt(btn.dataset.domain, 10) === L);
+                });
+
+                const walkSel = document.getElementById('walk-level-select');
+                walkSel.innerHTML = '';
+                for (let h = 0; h < this.params.horizonCount; h++) {
+                    const elev = GeomechanicsCalculator.getHorizonElevations(this.params, h);
+                    const opt = document.createElement('option');
+                    opt.value = h;
+                    opt.textContent = `Horizon ${h + 1} (${elev.roof.toFixed(0)}m)`;
+                    walkSel.appendChild(opt);
+                }
+                walkSel.value = Math.min(this.world.walkHorizonIdx, this.params.horizonCount - 1);
+            }
+
+            updateCursorHUD({ easting, northing, col, row, activeHorizonIdx, floorTrue }) {
+                document.getElementById('status-coords').textContent =
+                    `E (X): ${easting.toFixed(2)} m | N (Y): ${northing.toFixed(2)} m`;
+                document.getElementById('status-cell').textContent = `CELL [${col}, ${row}]`;
+                document.getElementById('status-active-horizon').textContent =
+                    `ACTIVE: HORIZON ${activeHorizonIdx + 1} (${floorTrue.toFixed(0)}m)`;
+            }
+
+            updateFPS(fps) {
+                document.getElementById('status-fps').textContent = `${fps} FPS`;
+            }
+
+            updateFleetHUD(unitCount, slamPoints) {
+                const el = document.getElementById('status-fleet');
+                if (el) el.textContent = `Fleet: ${unitCount} | SLAM: ${slamPoints.toLocaleString()} pts`;
+            }
+
+            showPillarInspector(meta) {
+                document.getElementById('insp-title').textContent = meta.id;
+                document.getElementById('insp-level').textContent = meta.levelName;
+                document.getElementById('insp-en').textContent = `${meta.easting.toFixed(1)} m, ${meta.northing.toFixed(1)} m`;
+                document.getElementById('insp-z').textContent = `${meta.roofTrue.toFixed(1)} m to ${meta.floorTrue.toFixed(1)} m`;
+                document.getElementById('insp-stress').textContent = `${meta.stressMPa.toFixed(2)} MPa`;
+                document.getElementById('insp-vol-mass').textContent =
+                    `${Math.round(meta.volumeM3).toLocaleString()} m³ (${Math.round(meta.massTons).toLocaleString()} t)`;
+
+                const card = document.getElementById('inspector-card');
+                card.classList.remove('opacity-0', 'pointer-events-none', 'translate-y-2');
+            }
+
+            _bindEvents() {
+                const rebuild = () => {
+                    this.world.rebuildWorld();
+                    this.refreshAll();
+                };
+
+                // Camera View Presets
+                document.querySelectorAll('.preset-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const preset = btn.dataset.preset;
+                        document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b === btn));
+                        const walkBanner = document.getElementById('walk-banner');
+                        if (preset === 'walk') {
+                            walkBanner.classList.remove('hidden');
+                            walkBanner.classList.add('flex');
+                        } else {
+                            walkBanner.classList.add('hidden');
+                            walkBanner.classList.remove('flex');
+                        }
+                        this.world.setCameraPreset(preset);
+                    });
+                });
+
+                document.getElementById('btn-reset-view').addEventListener('click', () => {
+                    document.querySelectorAll('.preset-btn').forEach(b => b.classList.toggle('active', b.dataset.preset === 'iso'));
+                    const walkBanner = document.getElementById('walk-banner');
+                    walkBanner.classList.add('hidden');
+                    walkBanner.classList.remove('flex');
+                    this.world.setCameraPreset('iso');
+                });
+
+                document.getElementById('btn-toggle-wireframe').addEventListener('click', e => {
+                    this.params.gridWireframe = !this.params.gridWireframe;
+                    e.target.textContent = `Grid Wireframe: ${this.params.gridWireframe ? 'ON' : 'OFF'}`;
+                    this.world.applyVisibilityState();
+                });
+
+                const syncOverburden = (compressed) => {
+                    this.params.update({ compressOverburden: compressed });
+                    document.getElementById('toggle-compress-ob').checked = compressed;
+                    const topBtn = document.getElementById('btn-compress-overburden');
+                    topBtn.textContent = compressed ? 'Overburden: Compressed' : 'Overburden: 100m True';
+                    topBtn.classList.toggle('border-sky-400', compressed);
+                    topBtn.classList.toggle('text-sky-300', compressed);
+                    rebuild();
+                };
+                document.getElementById('btn-compress-overburden').addEventListener('click', () => {
+                    syncOverburden(!this.params.compressOverburden);
+                });
+                document.getElementById('toggle-compress-ob').addEventListener('change', e => {
+                    syncOverburden(e.target.checked);
+                });
+
+                document.querySelectorAll('.domain-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        this.params.update({ domainSize: parseInt(btn.dataset.domain, 10) });
+                        rebuild();
+                        this.world.setCameraPreset('iso');
+                    });
+                });
+
+                document.getElementById('slider-domain').addEventListener('input', e => {
+                    this.params.update({ domainSize: parseInt(e.target.value, 10) });
+                    rebuild();
+                });
+
+                document.getElementById('slider-wp').addEventListener('input', e => {
+                    this.params.update({ pillarWidth: parseFloat(e.target.value) });
+                    rebuild();
+                });
+
+                document.getElementById('slider-wc').addEventListener('input', e => {
+                    this.params.update({ corridorWidth: parseFloat(e.target.value) });
+                    rebuild();
+                });
+
+                document.getElementById('slider-height').addEventListener('input', e => {
+                    this.params.update({ seamHeight: parseFloat(e.target.value) });
+                    rebuild();
+                });
+
+                document.querySelectorAll('.hcount-btn').forEach(btn => {
+                    btn.addEventListener('click', () => {
+                        const count = parseInt(btn.dataset.hcount, 10);
+                        this.params.update({ horizonCount: count, verticalInterval: count === 9 ? 25 : 50 });
+                        document.querySelectorAll('.hcount-btn').forEach(b => b.classList.toggle('active', b === btn));
+                        rebuild();
+                    });
+                });
+
+                document.getElementById('slider-interval').addEventListener('input', e => {
+                    this.params.update({ verticalInterval: parseFloat(e.target.value) });
+                    rebuild();
+                });
+
+                document.getElementById('slider-zscale').addEventListener('input', e => {
+                    this.params.update({ zScale: parseFloat(e.target.value) });
+                    rebuild();
+                });
+
+                document.getElementById('toggle-surface').addEventListener('change', e => {
+                    this.params.showSurface = e.target.checked;
+                    this.world.applyVisibilityState();
+                });
+
+                document.getElementById('btn-show-all-horizons').addEventListener('click', () => {
+                    this.params.soloTarget = null;
+                    this.params.showSurface = true;
+                    this.params.showHorizons = Array(MineParameters.MAX_HORIZONS).fill(true);
+                    document.getElementById('toggle-surface').checked = true;
+                    this.world.applyVisibilityState();
+                    this._renderHorizonToggles();
+                    this._syncSoloButtons();
+                });
+
+                const bindLayerToggle = (id, prop) => {
+                    document.getElementById(id).addEventListener('change', e => {
+                        this.params[prop] = e.target.checked;
+                        this.world.applyVisibilityState();
+                    });
+                };
+                bindLayerToggle('toggle-pillars', 'showPillars');
+                bindLayerToggle('toggle-corridors', 'showCorridors');
+                bindLayerToggle('toggle-remainder', 'showRemainder');
+                bindLayerToggle('toggle-callouts', 'showCallouts');
+                bindLayerToggle('toggle-survey', 'showSurvey');
+                bindLayerToggle('toggle-shaft', 'showShaft');
+                bindLayerToggle('toggle-strata', 'showStrata');
+                bindLayerToggle('toggle-rulers', 'showRulers');
+                bindLayerToggle('toggle-fleet', 'showFleet');
+                bindLayerToggle('toggle-slam-cloud', 'showSlamPointCloud');
+
+                document.getElementById('insp-close').addEventListener('click', () => {
+                    this.world.clearPillarSelection();
+                    const card = document.getElementById('inspector-card');
+                    card.classList.add('opacity-0', 'pointer-events-none', 'translate-y-2');
+                });
+
+                document.getElementById('walk-level-select').addEventListener('change', e => {
+                    this.world.setWalkthroughHorizon(parseInt(e.target.value, 10));
+                });
+
+                const sidebar = document.getElementById('left-sidebar');
+                document.getElementById('mobile-menu-btn').addEventListener('click', () => {
+                    sidebar.classList.remove('-translate-x-[360px]');
+                });
+                document.getElementById('close-sidebar-btn').addEventListener('click', () => {
+                    sidebar.classList.add('-translate-x-[360px]');
+                });
+            }
+        }
+
+        /**
+         * =====================================================================
+         * 11. UndergroundMineApplication — Top-Level Bootstrapper & Error Boundary
+         * =====================================================================
+         */
+        class UndergroundMineApplication {
+            constructor(containerId) {
+                this.containerEl = document.getElementById(containerId);
+                this.params = new MineParameters();
+                this.ui = null;
+
+                this.world = new MineWorldManager(this.containerEl, this.params, {
+                    onCursorMove: data => this.ui && this.ui.updateCursorHUD(data),
+                    onPillarSelect: meta => this.ui && this.ui.showPillarInspector(meta),
+                    onFpsUpdate: fps => this.ui && this.ui.updateFPS(fps),
+                    onFleetUpdate: (units, pts) => this.ui && this.ui.updateFleetHUD(units, pts)
+                });
+
+                this.ui = new CADInterfaceController(this.params, this.world);
+            }
+
+            launch() {
+                this.world.rebuildWorld();
+                this.ui.refreshAll();
+                this.world.startRenderLoop();
+            }
+
+            destroy() {
+                this.world.dispose();
+            }
+        }
+
+        window.onload = function () {
+            try {
+                if (typeof THREE === 'undefined') {
+                    throw new Error('Three.js failed to load from CDN.');
+                }
+                const app = new UndergroundMineApplication('canvas-container');
+                app.launch();
+                window.addEventListener('beforeunload', () => app.destroy());
+            } catch (err) {
+                const banner = document.getElementById('runtime-error-banner');
+                const text = document.getElementById('runtime-error-text');
+                if (banner && text) {
+                    text.textContent = err && err.message ? err.message : String(err);
+                    banner.classList.remove('hidden');
+                }
+            }
+        };
+    </script>
+</body>
+</html>

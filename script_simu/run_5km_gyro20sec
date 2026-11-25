@@ -1,0 +1,34 @@
+#!/bin/bash
+set -e
+
+# Global simulation parameters
+SPANS=20
+CTRL_SPAC=250
+SIGMA_GYRO=20
+TUNNEL_LENGTH=$(( SPANS * CTRL_SPAC / 1000 ))
+OUT_BASE="./RESULT_${TUNNEL_LENGTH}km_${SIGMA_GYRO}sec"
+
+# Clean up background jobs if interrupted (Ctrl+C)
+trap 'kill 0' SIGINT SIGTERM
+
+echo "Running 5 simulations in parallel (SPANS=${SPANS}, CTRL_SPAC=${CTRL_SPAC}, SIGMA_GYRO=${SIGMA_GYRO}\", TUNNEL_LENGTH=${TUNNEL_LENGTH}km)..."
+
+mkdir -p \
+  "${OUT_BASE}/R_NoLink_NoGyro" \
+  "${OUT_BASE}/R_NoLink_WtGyro" \
+  "${OUT_BASE}/R_WtLink_NoGyro" \
+  "${OUT_BASE}/R_WtLink_WtGyro_05" \
+  "${OUT_BASE}/R_WtLink_WtGyro_10"
+
+python corridor_network_sim_updated.py --spans "$SPANS" --ctrl-spac "$CTRL_SPAC" --sigma-gyro "$SIGMA_GYRO" --no-link-ts --no-use-gyro --exag 200  --run-gama --out-dir "${OUT_BASE}/R_NoLink_NoGyro"    > "${OUT_BASE}/R_NoLink_NoGyro/R_NoLink_NoGyro.log" 2>&1 &
+python corridor_network_sim_updated.py --spans "$SPANS" --ctrl-spac "$CTRL_SPAC" --sigma-gyro "$SIGMA_GYRO" --no-link-ts --use-gyro    --exag 200  --run-gama --out-dir "${OUT_BASE}/R_NoLink_WtGyro"    > "${OUT_BASE}/R_NoLink_WtGyro/R_NoLink_WtGyro.log" 2>&1 &
+python corridor_network_sim_updated.py --spans "$SPANS" --ctrl-spac "$CTRL_SPAC" --sigma-gyro "$SIGMA_GYRO" --link-ts    --no-use-gyro --exag 5000 --run-gama --out-dir "${OUT_BASE}/R_WtLink_NoGyro"    > "${OUT_BASE}/R_WtLink_NoGyro/R_WtLink_NoGyro.log" 2>&1 &
+python corridor_network_sim_updated.py --spans "$SPANS" --ctrl-spac "$CTRL_SPAC" --sigma-gyro "$SIGMA_GYRO" --link-ts    --use-gyro    --exag 5000 --gyro-every 5  --run-gama --out-dir "${OUT_BASE}/R_WtLink_WtGyro_05" > "${OUT_BASE}/R_WtLink_WtGyro_05/R_WtLink_WtGyro_05.log" 2>&1 &
+python corridor_network_sim_updated.py --spans "$SPANS" --ctrl-spac "$CTRL_SPAC" --sigma-gyro "$SIGMA_GYRO" --link-ts    --use-gyro    --exag 5000 --gyro-every 10 --run-gama --out-dir "${OUT_BASE}/R_WtLink_WtGyro_10" > "${OUT_BASE}/R_WtLink_WtGyro_10/R_WtLink_WtGyro_10.log" 2>&1 &
+
+# Wait for all background jobs to finish
+wait
+
+echo "All simulations completed."
+for f in "${OUT_BASE}"/R_*/*.png; do feh -g 960x540 --scale-down "$f" & done
+for f in "${OUT_BASE}"/R_*/R_*.log; do echo "=== $f ==="; grep -A 6 "a_mm" "$f"; echo; done
