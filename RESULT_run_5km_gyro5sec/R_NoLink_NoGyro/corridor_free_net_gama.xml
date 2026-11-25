@@ -1,0 +1,271 @@
+<?xml version="1.0" encoding="utf-8"?>
+<gama-local xmlns="http://www.gnu.org/software/gama/gama-local">
+  <network axes-xy="ne" angles="left-handed">
+    <description>2D Free-Network Tunnel Simulation (STRAIGHT, 20 spans @ 250.0m, TS-Link=False, Gyro=False)</description>
+    <parameters sigma-apr="1.0" conf-pr="0.95" tol-abs="1000.0" sigma-act="aposteriori"/>
+    <points-observations direction-stdev="2.0000" angle-stdev="2.8284" distance-stdev="3.0000 0.0000 1.0">
+      <point id="CP_00_L" x="1004.901801" y="998.467968" adj="XY"/>
+      <point id="CP_00_R" x="995.589102" y="1000.725197" adj="XY"/>
+      <point id="TS_01" x="1030.533351" y="1121.240905" adj="XY"/>
+      <point id="CP_01_L" x="1069.446776" y="1240.378850" adj="XY"/>
+      <point id="CP_01_R" x="1059.966283" y="1242.681967" adj="XY"/>
+      <point id="TS_02" x="1098.447237" y="1361.634737" adj="XY"/>
+      <point id="CP_02_L" x="1134.171379" y="1481.588520" adj="XY"/>
+      <point id="CP_02_R" x="1124.734305" y="1484.473029" adj="XY"/>
+      <point id="TS_03" x="1160.516212" y="1603.835760" adj="XY"/>
+      <point id="CP_03_L" x="1198.918270" y="1723.131036" adj="XY"/>
+      <point id="CP_03_R" x="1189.100449" y="1725.786740" adj="XY"/>
+      <point id="TS_04" x="1227.328428" y="1844.973275" adj="XY"/>
+      <point id="CP_04_L" x="1263.813152" y="1964.510606" adj="XY"/>
+      <point id="CP_04_R" x="1253.577088" y="1967.180777" adj="XY"/>
+      <point id="TS_05" x="1289.338068" y="2086.513207" adj="XY"/>
+      <point id="CP_05_L" x="1328.550422" y="2205.970004" adj="XY"/>
+      <point id="CP_05_R" x="1318.649557" y="2208.631693" adj="XY"/>
+      <point id="TS_06" x="1357.935028" y="2327.794960" adj="XY"/>
+      <point id="CP_06_L" x="1393.605580" y="2447.787195" adj="XY"/>
+      <point id="CP_06_R" x="1383.803401" y="2449.968878" adj="XY"/>
+      <point id="TS_07" x="1419.207255" y="2569.902989" adj="XY"/>
+      <point id="CP_07_L" x="1457.815451" y="2688.707097" adj="XY"/>
+      <point id="CP_07_R" x="1448.509137" y="2691.313432" adj="XY"/>
+      <point id="TS_08" x="1486.420547" y="2810.403762" adj="XY"/>
+      <point id="CP_08_L" x="1522.809034" y="2930.807734" adj="XY"/>
+      <point id="CP_08_R" x="1513.013828" y="2932.880088" adj="XY"/>
+      <point id="TS_09" x="1548.533079" y="3052.393441" adj="XY"/>
+      <point id="CP_09_L" x="1587.035265" y="3171.883310" adj="XY"/>
+      <point id="CP_09_R" x="1577.776238" y="3174.779166" adj="XY"/>
+      <point id="TS_10" x="1616.037107" y="3293.969774" adj="XY"/>
+      <point id="CP_10_L" x="1651.688846" y="3413.581797" adj="XY"/>
+      <point id="CP_10_R" x="1642.651279" y="3415.860916" adj="XY"/>
+      <point id="TS_11" x="1678.010461" y="3536.362459" adj="XY"/>
+      <point id="CP_11_L" x="1716.797922" y="3655.180111" adj="XY"/>
+      <point id="CP_11_R" x="1706.677986" y="3658.245164" adj="XY"/>
+      <point id="TS_12" x="1745.708820" y="3776.637598" adj="XY"/>
+      <point id="CP_12_L" x="1782.232037" y="3897.251221" adj="XY"/>
+      <point id="CP_12_R" x="1771.875638" y="3899.557098" adj="XY"/>
+      <point id="TS_13" x="1807.704969" y="4019.052649" adj="XY"/>
+      <point id="CP_13_L" x="1846.289871" y="4137.765694" adj="XY"/>
+      <point id="CP_13_R" x="1836.325772" y="4140.420223" adj="XY"/>
+      <point id="TS_14" x="1874.276751" y="4259.370849" adj="XY"/>
+      <point id="CP_14_L" x="1910.781436" y="4379.359167" adj="XY"/>
+      <point id="CP_14_R" x="1900.870354" y="4382.420911" adj="XY"/>
+      <point id="TS_15" x="1936.586647" y="4501.903773" adj="XY"/>
+      <point id="CP_15_L" x="1975.100161" y="4620.632132" adj="XY"/>
+      <point id="CP_15_R" x="1965.312459" y="4623.225461" adj="XY"/>
+      <point id="TS_16" x="2004.871979" y="4742.566195" adj="XY"/>
+      <point id="CP_16_L" x="2040.493789" y="4862.135330" adj="XY"/>
+      <point id="CP_16_R" x="2030.523684" y="4864.819407" adj="XY"/>
+      <point id="TS_17" x="2066.409112" y="4984.501409" adj="XY"/>
+      <point id="CP_17_L" x="2104.861466" y="5103.525598" adj="XY"/>
+      <point id="CP_17_R" x="2094.941686" y="5105.956623" adj="XY"/>
+      <point id="TS_18" x="2133.920432" y="5225.821022" adj="XY"/>
+      <point id="CP_18_L" x="2169.340441" y="5346.048485" adj="XY"/>
+      <point id="CP_18_R" x="2159.992590" y="5348.296306" adj="XY"/>
+      <point id="TS_19" x="2195.451686" y="5468.130728" adj="XY"/>
+      <point id="CP_19_L" x="2234.024461" y="5586.807684" adj="XY"/>
+      <point id="CP_19_R" x="2224.507620" y="5589.827843" adj="XY"/>
+      <point id="TS_20" x="2263.503428" y="5708.295722" adj="XY"/>
+      <point id="CP_20_L" x="2298.709131" y="5828.793264" adj="XY"/>
+      <point id="CP_20_R" x="2289.405246" y="5830.940428" adj="XY"/>
+      <obs from="TS_01">
+        <direction to="CP_01_R" val="184-59-42.9488" stdev="2.0000"/>
+        <direction to="CP_00_R" val="1-47-13.1345" stdev="2.0000"/>
+        <direction to="CP_01_L" val="180-24-50.2023" stdev="2.0000"/>
+        <direction to="CP_00_L" val="6-22-01.5775" stdev="2.0000"/>
+        <distance to="CP_01_R" val="125.046144" stdev="3.0000"/>
+        <distance to="CP_00_R" val="125.053638" stdev="3.0000"/>
+        <distance to="CP_01_L" val="125.168797" stdev="3.0000"/>
+        <distance to="CP_00_L" val="125.165598" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_02">
+        <direction to="CP_01_L" val="348-23-26.9884" stdev="2.0000"/>
+        <direction to="CP_02_L" val="165-10-58.0280" stdev="2.0000"/>
+        <direction to="CP_02_R" val="169-45-46.3992" stdev="2.0000"/>
+        <direction to="CP_01_R" val="343-48-40.1540" stdev="2.0000"/>
+        <distance to="CP_01_L" val="125.048676" stdev="3.0000"/>
+        <distance to="CP_02_L" val="125.051538" stdev="3.0000"/>
+        <distance to="CP_02_R" val="125.167526" stdev="3.0000"/>
+        <distance to="CP_01_R" val="125.170376" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_03">
+        <direction to="CP_03_R" val="116-23-09.8711" stdev="2.0000"/>
+        <direction to="CP_02_R" val="293-10-34.3390" stdev="2.0000"/>
+        <direction to="CP_02_L" val="297-45-24.4064" stdev="2.0000"/>
+        <direction to="CP_03_L" val="111-48-15.4971" stdev="2.0000"/>
+        <distance to="CP_03_R" val="125.050854" stdev="3.0000"/>
+        <distance to="CP_02_R" val="125.051810" stdev="3.0000"/>
+        <distance to="CP_02_L" val="125.176877" stdev="3.0000"/>
+        <distance to="CP_03_L" val="125.171252" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_04">
+        <direction to="CP_03_L" val="178-55-12.1101" stdev="2.0000"/>
+        <direction to="CP_04_L" val="355-42-42.6493" stdev="2.0000"/>
+        <direction to="CP_04_R" val="0-17-34.1367" stdev="2.0000"/>
+        <direction to="CP_03_R" val="174-20-15.7370" stdev="2.0000"/>
+        <distance to="CP_03_L" val="125.046351" stdev="3.0000"/>
+        <distance to="CP_04_L" val="125.050054" stdev="3.0000"/>
+        <distance to="CP_04_R" val="125.166859" stdev="3.0000"/>
+        <distance to="CP_03_R" val="125.166303" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_05">
+        <direction to="CP_05_R" val="202-32-37.8409" stdev="2.0000"/>
+        <direction to="CP_04_R" val="19-20-14.7280" stdev="2.0000"/>
+        <direction to="CP_04_L" val="23-55-02.1719" stdev="2.0000"/>
+        <direction to="CP_05_L" val="197-57-47.2153" stdev="2.0000"/>
+        <distance to="CP_05_R" val="125.053266" stdev="3.0000"/>
+        <distance to="CP_04_R" val="125.049121" stdev="3.0000"/>
+        <distance to="CP_04_L" val="125.172295" stdev="3.0000"/>
+        <distance to="CP_05_L" val="125.172096" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_06">
+        <direction to="CP_06_L" val="175-08-05.0350" stdev="2.0000"/>
+        <direction to="CP_05_L" val="358-20-30.2188" stdev="2.0000"/>
+        <direction to="CP_06_R" val="179-42-53.9538" stdev="2.0000"/>
+        <direction to="CP_05_R" val="353-45-39.8639" stdev="2.0000"/>
+        <distance to="CP_06_L" val="125.051250" stdev="3.0000"/>
+        <distance to="CP_05_L" val="125.051257" stdev="3.0000"/>
+        <distance to="CP_06_R" val="125.157644" stdev="3.0000"/>
+        <distance to="CP_05_R" val="125.169231" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_07">
+        <direction to="CP_06_R" val="310-11-39.2285" stdev="2.0000"/>
+        <direction to="CP_07_R" val="133-24-03.5419" stdev="2.0000"/>
+        <direction to="CP_07_L" val="128-49-17.2261" stdev="2.0000"/>
+        <direction to="CP_06_L" val="314-46-28.9986" stdev="2.0000"/>
+        <distance to="CP_06_R" val="125.051325" stdev="3.0000"/>
+        <distance to="CP_07_R" val="125.049602" stdev="3.0000"/>
+        <distance to="CP_07_L" val="125.164508" stdev="3.0000"/>
+        <distance to="CP_06_L" val="125.169114" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_08">
+        <direction to="CP_08_L" val="309-38-00.8493" stdev="2.0000"/>
+        <direction to="CP_07_L" val="132-50-28.1539" stdev="2.0000"/>
+        <direction to="CP_07_R" val="128-15-39.6731" stdev="2.0000"/>
+        <direction to="CP_08_R" val="314-12-51.6233" stdev="2.0000"/>
+        <distance to="CP_08_L" val="125.049489" stdev="3.0000"/>
+        <distance to="CP_07_L" val="125.049099" stdev="3.0000"/>
+        <distance to="CP_07_R" val="125.169654" stdev="3.0000"/>
+        <distance to="CP_08_R" val="125.167342" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_09">
+        <direction to="CP_08_R" val="5-25-48.3662" stdev="2.0000"/>
+        <direction to="CP_09_R" val="188-38-16.7057" stdev="2.0000"/>
+        <direction to="CP_09_L" val="184-03-23.7934" stdev="2.0000"/>
+        <direction to="CP_08_L" val="10-00-38.3090" stdev="2.0000"/>
+        <distance to="CP_08_R" val="125.050900" stdev="3.0000"/>
+        <distance to="CP_09_R" val="125.047565" stdev="3.0000"/>
+        <distance to="CP_09_L" val="125.171478" stdev="3.0000"/>
+        <distance to="CP_08_L" val="125.169072" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_10">
+        <direction to="CP_10_L" val="215-48-41.6703" stdev="2.0000"/>
+        <direction to="CP_09_L" val="39-01-08.5146" stdev="2.0000"/>
+        <direction to="CP_09_R" val="34-26-19.4637" stdev="2.0000"/>
+        <direction to="CP_10_R" val="220-23-31.8504" stdev="2.0000"/>
+        <distance to="CP_10_L" val="125.047007" stdev="3.0000"/>
+        <distance to="CP_09_L" val="125.044337" stdev="3.0000"/>
+        <distance to="CP_09_R" val="125.164273" stdev="3.0000"/>
+        <distance to="CP_10_R" val="125.167206" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_11">
+        <direction to="CP_11_R" val="289-14-01.6310" stdev="2.0000"/>
+        <direction to="CP_10_R" val="106-01-32.7504" stdev="2.0000"/>
+        <direction to="CP_10_L" val="110-36-23.8259" stdev="2.0000"/>
+        <direction to="CP_11_L" val="284-39-15.2280" stdev="2.0000"/>
+        <distance to="CP_11_R" val="125.050106" stdev="3.0000"/>
+        <distance to="CP_10_R" val="125.046804" stdev="3.0000"/>
+        <distance to="CP_10_L" val="125.165491" stdev="3.0000"/>
+        <distance to="CP_11_L" val="125.168244" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_12">
+        <direction to="CP_11_L" val="219-59-52.1206" stdev="2.0000"/>
+        <direction to="CP_12_L" val="36-47-18.9187" stdev="2.0000"/>
+        <direction to="CP_11_R" val="215-25-00.6628" stdev="2.0000"/>
+        <direction to="CP_12_R" val="41-22-15.6302" stdev="2.0000"/>
+        <distance to="CP_11_L" val="125.053593" stdev="3.0000"/>
+        <distance to="CP_12_L" val="125.055228" stdev="3.0000"/>
+        <distance to="CP_11_R" val="125.170905" stdev="3.0000"/>
+        <distance to="CP_12_R" val="125.170315" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_13">
+        <direction to="CP_12_R" val="126-17-57.2826" stdev="2.0000"/>
+        <direction to="CP_13_R" val="309-30-20.8910" stdev="2.0000"/>
+        <direction to="CP_13_L" val="304-55-34.5122" stdev="2.0000"/>
+        <direction to="CP_12_L" val="130-52-42.6868" stdev="2.0000"/>
+        <distance to="CP_12_R" val="125.056604" stdev="3.0000"/>
+        <distance to="CP_13_R" val="125.050950" stdev="3.0000"/>
+        <distance to="CP_13_L" val="125.165525" stdev="3.0000"/>
+        <distance to="CP_12_L" val="125.168659" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_14">
+        <direction to="CP_14_L" val="86-32-30.5805" stdev="2.0000"/>
+        <direction to="CP_13_L" val="269-44-57.4571" stdev="2.0000"/>
+        <direction to="CP_13_R" val="265-10-07.6608" stdev="2.0000"/>
+        <direction to="CP_14_R" val="91-07-17.5583" stdev="2.0000"/>
+        <distance to="CP_14_L" val="125.048618" stdev="3.0000"/>
+        <distance to="CP_13_L" val="125.051798" stdev="3.0000"/>
+        <distance to="CP_13_R" val="125.168078" stdev="3.0000"/>
+        <distance to="CP_14_R" val="125.169405" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_15">
+        <direction to="CP_15_R" val="358-39-23.8285" stdev="2.0000"/>
+        <direction to="CP_14_R" val="175-26-48.7395" stdev="2.0000"/>
+        <direction to="CP_14_L" val="180-01-38.1287" stdev="2.0000"/>
+        <direction to="CP_15_L" val="354-04-30.7423" stdev="2.0000"/>
+        <distance to="CP_15_R" val="125.051490" stdev="3.0000"/>
+        <distance to="CP_14_R" val="125.051433" stdev="3.0000"/>
+        <distance to="CP_14_L" val="125.169169" stdev="3.0000"/>
+        <distance to="CP_15_L" val="125.163398" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_16">
+        <direction to="CP_15_L" val="215-41-37.6921" stdev="2.0000"/>
+        <direction to="CP_16_L" val="32-29-08.7165" stdev="2.0000"/>
+        <direction to="CP_16_R" val="37-04-01.3422" stdev="2.0000"/>
+        <direction to="CP_15_R" val="211-06-52.0890" stdev="2.0000"/>
+        <distance to="CP_15_L" val="125.049223" stdev="3.0000"/>
+        <distance to="CP_16_L" val="125.042728" stdev="3.0000"/>
+        <distance to="CP_16_R" val="125.169372" stdev="3.0000"/>
+        <distance to="CP_15_R" val="125.170955" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_17">
+        <direction to="CP_17_R" val="304-14-22.3095" stdev="2.0000"/>
+        <direction to="CP_16_R" val="121-01-52.5665" stdev="2.0000"/>
+        <direction to="CP_16_L" val="125-36-45.5051" stdev="2.0000"/>
+        <direction to="CP_17_L" val="299-39-33.6295" stdev="2.0000"/>
+        <distance to="CP_17_R" val="125.047973" stdev="3.0000"/>
+        <distance to="CP_16_R" val="125.048577" stdev="3.0000"/>
+        <distance to="CP_16_L" val="125.168152" stdev="3.0000"/>
+        <distance to="CP_17_L" val="125.165801" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_18">
+        <direction to="CP_17_L" val="220-15-02.8709" stdev="2.0000"/>
+        <direction to="CP_18_L" val="37-02-32.1639" stdev="2.0000"/>
+        <direction to="CP_18_R" val="41-37-26.9693" stdev="2.0000"/>
+        <direction to="CP_17_R" val="215-40-12.8902" stdev="2.0000"/>
+        <distance to="CP_17_L" val="125.053422" stdev="3.0000"/>
+        <distance to="CP_18_L" val="125.049755" stdev="3.0000"/>
+        <distance to="CP_18_R" val="125.175968" stdev="3.0000"/>
+        <distance to="CP_17_R" val="125.169403" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_19">
+        <direction to="CP_19_R" val="340-24-42.7878" stdev="2.0000"/>
+        <direction to="CP_18_R" val="157-12-14.4312" stdev="2.0000"/>
+        <direction to="CP_19_L" val="335-49-52.7098" stdev="2.0000"/>
+        <direction to="CP_18_L" val="161-47-06.0617" stdev="2.0000"/>
+        <distance to="CP_19_R" val="125.050343" stdev="3.0000"/>
+        <distance to="CP_18_R" val="125.049840" stdev="3.0000"/>
+        <distance to="CP_19_L" val="125.170378" stdev="3.0000"/>
+        <distance to="CP_18_L" val="125.171572" stdev="3.0000"/>
+      </obs>
+      <obs from="TS_20">
+        <direction to="CP_19_L" val="287-24-04.6935" stdev="2.0000"/>
+        <direction to="CP_20_L" val="104-11-31.4954" stdev="2.0000"/>
+        <direction to="CP_20_R" val="108-46-18.9055" stdev="2.0000"/>
+        <direction to="CP_19_R" val="282-49-11.9523" stdev="2.0000"/>
+        <distance to="CP_19_L" val="125.049797" stdev="3.0000"/>
+        <distance to="CP_20_L" val="125.051403" stdev="3.0000"/>
+        <distance to="CP_20_R" val="125.169019" stdev="3.0000"/>
+        <distance to="CP_19_R" val="125.172139" stdev="3.0000"/>
+      </obs>
+    </points-observations>
+  </network>
+</gama-local>

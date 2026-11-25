@@ -1,0 +1,21 @@
+[CSV] Wrote 62 TS/CP stations: RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_station_coordinates.csv
+Saved outputs to 'RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/':
+  - RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_ts_link.png
+  - RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_ts_link.svg
+  - RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama.xml
+  - RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_station_coordinates.csv
+
+[GAMA] $ /usr/local/bin/gama-local /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama.xml --algorithm svd --angular 360 --text /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd.txt --xml /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd_result.xml --svg /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd.svg
+[GAMA] Exit code: 0; log: /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd.log
+[GAMA] Results: /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd.txt, /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd_result.xml, /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_WtLink_WtGyro_10/corridor_free_net_gama_svd.svg
+Adjustment Summary (STRAIGHT Alignment - WITH GYRO (Every 10 TS) | WITH Reciprocal TS_{n-1}<->TS_n<->TS_{n+1} Tie):
+  Total Obs: 240 (TS-TS Tie Obs: 76, Gyro Obs: 4) | Free Params: 140 (Datum Defect=0) | DOF: 100
+  vTPv: 103.886 | Post σ₀: 1.0192 | Chi2 Test Passed: True
+
+--- Max & Mean 95% Error Ellipse Semi-Major/Minor Axes (mm) ---
+                     a_mm                   b_mm           
+                     mean         max       mean        max
+role has_gyro                                              
+CTRL False     108.951457  236.165930  14.273570  20.940244
+TS   False     113.727020  225.801196  14.124915  19.554494
+     True       59.490636  113.665497   9.927480  14.642235

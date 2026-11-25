@@ -1,0 +1,21 @@
+[CSV] Wrote 62 TS/CP stations: RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_station_coordinates.csv
+Saved outputs to 'RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/':
+  - RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_ts_link.png
+  - RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_ts_link.svg
+  - RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama.xml
+  - RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_station_coordinates.csv
+
+[GAMA] $ /usr/local/bin/gama-local /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama.xml --algorithm svd --angular 360 --text /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd.txt --xml /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd_result.xml --svg /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd.svg
+[GAMA] Exit code: 0; log: /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd.log
+[GAMA] Results: /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd.txt, /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd_result.xml, /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec_fix/R_NoLink_WtGyro/corridor_free_net_gama_svd.svg
+Adjustment Summary (STRAIGHT Alignment - WITH GYRO (Every 5 TS) | WITHOUT TS-TS Tie):
+  Total Obs: 168 (TS-TS Tie Obs: 0, Gyro Obs: 8) | Free Params: 140 (Datum Defect=0) | DOF: 28
+  vTPv: 39.133 | Post σ₀: 1.1822 | Chi2 Test Passed: True
+
+--- Max & Mean 95% Error Ellipse Semi-Major/Minor Axes (mm) ---
+                      a_mm                    b_mm           
+                      mean          max       mean        max
+role has_gyro                                                
+CTRL False     1715.161303  3361.614428  26.715959  41.621110
+TS   False     1776.948567  3099.534226  26.931532  38.599575
+     True      1424.333166  2377.459029  22.175189  34.153368

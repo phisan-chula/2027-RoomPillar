@@ -1,0 +1,20 @@
+[CSV] Wrote 62 TS/CP stations: RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_station_coordinates.csv
+Saved outputs to 'RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/':
+  - RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_ts_link.png
+  - RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_ts_link.svg
+  - RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama.xml
+  - RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_station_coordinates.csv
+
+[GAMA] $ /usr/local/bin/gama-local /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama.xml --algorithm svd --angular 360 --text /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd.txt --xml /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd_result.xml --svg /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd.svg
+[GAMA] Exit code: 0; log: /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd.log
+[GAMA] Results: /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd.txt, /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd_result.xml, /mnt/nvme1/Project/2027-RoomPillar/RESULT_run_5km_gyro5sec/R_WtLink_NoGyro/corridor_free_net_gama_svd.svg
+Adjustment Summary (STRAIGHT Alignment - WITHOUT GYRO (Pure TS Free Network) | WITH Reciprocal TS_{n-1}<->TS_n<->TS_{n+1} Tie):
+  Total Obs: 236 (TS-TS Tie Obs: 76, Gyro Obs: 0) | Free Params: 144 (Datum Defect=3) | DOF: 95
+  vTPv: 106.589 | Post σ₀: 1.0592 | Chi2 Test Passed: True
+
+--- Max & Mean 95% Error Ellipse Semi-Major/Minor Axes (mm) ---
+                    a_mm                 b_mm           
+                    mean        max      mean        max
+role has_gyro                                           
+CTRL False     38.731268  74.639078  9.711283  13.474498
+TS   False     36.180547  64.255191  8.028896  11.090780

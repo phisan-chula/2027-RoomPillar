@@ -1,0 +1,304 @@
+<?xml version='1.0' encoding='utf-8' standalone='no'?>
+<!DOCTYPE svg PUBLIC '-//W3C//DTD SVG 1.1//EN'
+  'http://www.w3.org/Graphics/SVG/1.1/DTD/svg11.dtd'>
+<svg version='1.1'  width='5537.86' height='3113.93' xmlns='http://www.w3.org/2000/svg' xmlns:xlink='http://www.w3.org/1999/xlink' >
+
+<defs>
+  <marker id='arrowhead' markerWidth='10' markerHeight='7'
+  refX='0' refY='3.5' orient='auto' style='fill:black'>
+  <polygon points='0 0, 10 3.5, 0 7' />
+  </marker>
+</defs>
+<g style='stroke:black;stroke-width:1.53401;'>
+<polyline points='153.401,2346.93 153.401,2960.53 767.003,2960.53 ' style='fill:none;' />
+<polyline points='167.207,2415.96 153.401,2346.93 139.595,2415.96 ' style='fill:none;' />
+<polyline points='697.973,2946.73 767.003,2960.53 697.973,2974.34 ' style='fill:none;' />
+</g>
+<text font-family='sans-serif' font-size='61.3602' x='153.401' y='2285.57' style='text-anchor: middle;'>X</text>
+<text font-family='sans-serif' x='828.363' y='2960.53' font-size='61.3602' style='dominant-baseline: central;'> Y</text>
+<line x1='306.801' y1='2337.27' x2='429.221' y2='2311.19' style='stroke:black;stroke-width:1.53401;' />
+<line x1='309.38' y1='2346.93' x2='429.221' y2='2311.19' style='stroke:black;stroke-width:1.53401;' />
+<line x1='548.281' y1='2272.56' x2='429.221' y2='2311.19' style='stroke:black;stroke-width:1.53401;' />
+<line x1='548.281' y1='2272.56' x2='669.927' y2='2243.58' style='stroke:black;stroke-width:1.53401;' />
+<line x1='550.866' y1='2282.22' x2='429.221' y2='2311.19' style='stroke:black;stroke-width:1.53401;' />
+<line x1='550.866' y1='2282.22' x2='669.927' y2='2243.58' style='stroke:black;stroke-width:1.53401;' />
+<line x1='789.764' y1='2207.84' x2='669.927' y2='2243.58' style='stroke:black;stroke-width:1.53401;' />
+<line x1='789.764' y1='2207.84' x2='912.187' y2='2181.77' style='stroke:black;stroke-width:1.53401;' />
+<line x1='792.352' y1='2217.51' x2='669.927' y2='2243.58' style='stroke:black;stroke-width:1.53401;' />
+<line x1='792.352' y1='2217.51' x2='912.187' y2='2181.77' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1031.24' y1='2143.14' x2='912.187' y2='2181.77' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1031.24' y1='2143.14' x2='1152.89' y2='2114.17' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1033.83' y1='2152.8' x2='912.187' y2='2181.77' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1033.83' y1='2152.8' x2='1152.89' y2='2114.17' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1272.73' y1='2078.43' x2='1152.89' y2='2114.17' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1272.73' y1='2078.43' x2='1395.15' y2='2052.36' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1275.31' y1='2088.09' x2='1152.89' y2='2114.17' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1275.31' y1='2088.09' x2='1395.15' y2='2052.36' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1514.21' y1='2013.72' x2='1395.15' y2='2052.36' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1514.21' y1='2013.72' x2='1635.86' y2='1984.75' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1516.8' y1='2023.38' x2='1395.15' y2='2052.36' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1516.8' y1='2023.38' x2='1635.86' y2='1984.75' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1755.69' y1='1949.02' x2='1635.86' y2='1984.75' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1755.69' y1='1949.02' x2='1878.11' y2='1922.95' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1758.28' y1='1958.68' x2='1635.86' y2='1984.75' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1758.28' y1='1958.68' x2='1878.11' y2='1922.95' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1997.17' y1='1884.31' x2='1878.11' y2='1922.95' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1997.17' y1='1884.31' x2='2118.82' y2='1855.34' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1999.75' y1='1893.97' x2='1878.11' y2='1922.95' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1999.75' y1='1893.97' x2='2118.82' y2='1855.34' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2238.65' y1='1819.61' x2='2118.82' y2='1855.34' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2238.65' y1='1819.61' x2='2361.08' y2='1793.53' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2241.24' y1='1829.26' x2='2118.82' y2='1855.34' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2241.24' y1='1829.26' x2='2361.08' y2='1793.53' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2480.14' y1='1754.9' x2='2361.08' y2='1793.53' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2480.14' y1='1754.9' x2='2601.78' y2='1725.93' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2482.72' y1='1764.56' x2='2361.08' y2='1793.53' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2482.72' y1='1764.56' x2='2601.78' y2='1725.93' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2721.62' y1='1690.19' x2='2601.78' y2='1725.93' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2721.62' y1='1690.19' x2='2844.04' y2='1664.12' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2724.21' y1='1699.85' x2='2601.78' y2='1725.93' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2724.21' y1='1699.85' x2='2844.04' y2='1664.12' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2963.1' y1='1625.49' x2='2844.04' y2='1664.12' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2963.1' y1='1625.49' x2='3084.74' y2='1596.52' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2965.69' y1='1635.15' x2='2844.04' y2='1664.12' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2965.69' y1='1635.15' x2='3084.74' y2='1596.52' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3204.58' y1='1560.78' x2='3084.74' y2='1596.52' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3204.58' y1='1560.78' x2='3327.01' y2='1534.71' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3207.17' y1='1570.44' x2='3084.74' y2='1596.52' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3207.17' y1='1570.44' x2='3327.01' y2='1534.71' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3446.07' y1='1496.08' x2='3327.01' y2='1534.71' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3446.07' y1='1496.08' x2='3567.71' y2='1467.1' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3448.66' y1='1505.74' x2='3327.01' y2='1534.71' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3448.66' y1='1505.74' x2='3567.71' y2='1467.1' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3687.55' y1='1431.37' x2='3567.71' y2='1467.1' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3687.55' y1='1431.37' x2='3809.97' y2='1405.29' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3690.14' y1='1441.03' x2='3567.71' y2='1467.1' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3690.14' y1='1441.03' x2='3809.97' y2='1405.29' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3929.03' y1='1366.66' x2='3809.97' y2='1405.29' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3929.03' y1='1366.66' x2='4050.67' y2='1337.69' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3931.61' y1='1376.32' x2='3809.97' y2='1405.29' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3931.61' y1='1376.32' x2='4050.67' y2='1337.69' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4170.51' y1='1301.95' x2='4050.67' y2='1337.69' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4170.51' y1='1301.95' x2='4292.93' y2='1275.87' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4173.1' y1='1311.61' x2='4050.67' y2='1337.69' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4173.1' y1='1311.61' x2='4292.93' y2='1275.87' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4411.99' y1='1237.24' x2='4292.93' y2='1275.87' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4411.99' y1='1237.24' x2='4533.63' y2='1208.27' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4414.58' y1='1246.9' x2='4292.93' y2='1275.87' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4414.58' y1='1246.9' x2='4533.63' y2='1208.27' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4653.47' y1='1172.53' x2='4533.63' y2='1208.27' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4653.47' y1='1172.53' x2='4775.89' y2='1146.46' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4656.06' y1='1182.2' x2='4533.63' y2='1208.27' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4656.06' y1='1182.2' x2='4775.89' y2='1146.46' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4894.95' y1='1107.83' x2='4775.89' y2='1146.46' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4894.95' y1='1107.83' x2='5016.6' y2='1078.86' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4897.53' y1='1117.49' x2='4775.89' y2='1146.46' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4897.53' y1='1117.49' x2='5016.6' y2='1078.86' style='stroke:black;stroke-width:1.53401;' />
+<line x1='5136.43' y1='1043.12' x2='5016.6' y2='1078.86' style='stroke:black;stroke-width:1.53401;' />
+<line x1='5139.02' y1='1052.79' x2='5016.6' y2='1078.86' style='stroke:black;stroke-width:1.53401;' />
+<line x1='429.221' y1='2311.19' x2='669.927' y2='2243.58' style='stroke:black;stroke-width:1.53401;' />
+<line x1='669.927' y1='2243.58' x2='912.187' y2='2181.77' style='stroke:black;stroke-width:1.53401;' />
+<line x1='912.187' y1='2181.77' x2='1152.89' y2='2114.17' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1152.89' y1='2114.17' x2='1395.15' y2='2052.36' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1395.15' y1='2052.36' x2='1635.86' y2='1984.75' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1635.86' y1='1984.75' x2='1878.11' y2='1922.95' style='stroke:black;stroke-width:1.53401;' />
+<line x1='1878.11' y1='1922.95' x2='2118.82' y2='1855.34' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2118.82' y1='1855.34' x2='2361.08' y2='1793.53' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2361.08' y1='1793.53' x2='2601.78' y2='1725.93' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2601.78' y1='1725.93' x2='2844.04' y2='1664.12' style='stroke:black;stroke-width:1.53401;' />
+<line x1='2844.04' y1='1664.12' x2='3084.74' y2='1596.52' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3084.74' y1='1596.52' x2='3327.01' y2='1534.71' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3327.01' y1='1534.71' x2='3567.71' y2='1467.1' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3567.71' y1='1467.1' x2='3809.97' y2='1405.29' style='stroke:black;stroke-width:1.53401;' />
+<line x1='3809.97' y1='1405.29' x2='4050.67' y2='1337.69' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4050.67' y1='1337.69' x2='4292.93' y2='1275.87' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4292.93' y1='1275.87' x2='4533.63' y2='1208.27' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4533.63' y1='1208.27' x2='4775.89' y2='1146.46' style='stroke:black;stroke-width:1.53401;' />
+<line x1='4775.89' y1='1146.46' x2='5016.6' y2='1078.86' style='stroke:black;stroke-width:1.53401;' />
+<circle cx='306.801' cy='2337.27' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='306.801' y='2337.27' >CP_00_L</text>
+<ellipse  rx='638.037' ry='81.3431' transform='translate(306.801 2337.27) rotate(255.051)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='309.38' cy='2346.93' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='309.38' y='2346.93' >CP_00_R</text>
+<ellipse  rx='635.485' ry='81.3624' transform='translate(309.38 2346.93) rotate(254.945)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='548.281' cy='2272.56' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='548.281' y='2272.56' >CP_01_L</text>
+<ellipse  rx='604.113' ry='71.024' transform='translate(548.281 2272.56) rotate(255.081)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='550.866' cy='2282.22' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='550.866' y='2282.22' >CP_01_R</text>
+<ellipse  rx='605.25' ry='71.0107' transform='translate(550.866 2282.22) rotate(254.941)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='789.764' cy='2207.84' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='789.764' y='2207.84' >CP_02_L</text>
+<ellipse  rx='558.395' ry='66.6276' transform='translate(789.764 2207.84) rotate(255.097)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='792.352' cy='2217.51' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='792.352' y='2217.51' >CP_02_R</text>
+<ellipse  rx='558.395' ry='66.6321' transform='translate(792.352 2217.51) rotate(254.894)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1031.24' cy='2143.14' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1031.24' y='2143.14' >CP_03_L</text>
+<ellipse  rx='504.738' ry='62.503' transform='translate(1031.24 2143.14) rotate(255.125)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1033.83' cy='2152.8' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1033.83' y='2152.8' >CP_03_R</text>
+<ellipse  rx='504.739' ry='62.4987' transform='translate(1033.83 2152.8) rotate(254.874)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1272.73' cy='2078.43' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1272.73' y='2078.43' >CP_04_L</text>
+<ellipse  rx='447.409' ry='58.6863' transform='translate(1272.73 2078.43) rotate(255.141)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1275.31' cy='2088.09' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1275.31' y='2088.09' >CP_04_R</text>
+<ellipse  rx='447.41' ry='58.6897' transform='translate(1275.31 2088.09) rotate(254.848)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1514.21' cy='2013.72' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1514.21' y='2013.72' >CP_05_L</text>
+<ellipse  rx='390.377' ry='55.2586' transform='translate(1514.21 2013.72) rotate(255.161)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1516.8' cy='2023.38' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1516.8' y='2023.38' >CP_05_R</text>
+<ellipse  rx='390.378' ry='55.2556' transform='translate(1516.8 2023.38) rotate(254.839)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1755.69' cy='1949.02' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1755.69' y='1949.02' >CP_06_L</text>
+<ellipse  rx='337.942' ry='52.2821' transform='translate(1755.69 1949.02) rotate(255.155)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1758.28' cy='1958.68' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1758.28' y='1958.68' >CP_06_R</text>
+<ellipse  rx='337.942' ry='52.2845' transform='translate(1758.28 1958.68) rotate(254.827)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1997.17' cy='1884.31' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1997.17' y='1884.31' >CP_07_L</text>
+<ellipse  rx='294.676' ry='49.8485' transform='translate(1997.17 1884.31) rotate(255.146)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1999.75' cy='1893.97' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1999.75' y='1893.97' >CP_07_R</text>
+<ellipse  rx='294.677' ry='49.8472' transform='translate(1999.75 1893.97) rotate(254.858)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2238.65' cy='1819.61' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2238.65' y='1819.61' >CP_08_L</text>
+<ellipse  rx='264.483' ry='48.03' transform='translate(2238.65 1819.61) rotate(255.086)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2241.24' cy='1829.26' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2241.24' y='1829.26' >CP_08_R</text>
+<ellipse  rx='264.482' ry='48.0319' transform='translate(2241.24 1829.26) rotate(254.889)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2480.14' cy='1754.9' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2480.14' y='1754.9' >CP_09_L</text>
+<ellipse  rx='248.333' ry='46.9032' transform='translate(2480.14 1754.9) rotate(255.051)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2482.72' cy='1764.56' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2482.72' y='1764.56' >CP_09_R</text>
+<ellipse  rx='248.333' ry='46.9037' transform='translate(2482.72 1764.56) rotate(254.959)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2721.62' cy='1690.19' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2721.62' y='1690.19' >CP_10_L</text>
+<ellipse  rx='242.139' ry='46.5189' transform='translate(2721.62 1690.19) rotate(255.019)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2724.21' cy='1699.85' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2724.21' y='1699.85' >CP_10_R</text>
+<ellipse  rx='241.567' ry='46.5039' transform='translate(2724.21 1699.85) rotate(254.992)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2963.1' cy='1625.49' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2963.1' y='1625.49' >CP_11_L</text>
+<ellipse  rx='235.63' ry='46.9004' transform='translate(2963.1 1625.49) rotate(255.063)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2965.69' cy='1635.15' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2965.69' y='1635.15' >CP_11_R</text>
+<ellipse  rx='235.533' ry='46.886' transform='translate(2965.69 1635.15) rotate(254.945)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3204.58' cy='1560.78' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3204.58' y='1560.78' >CP_12_L</text>
+<ellipse  rx='227.119' ry='48.0344' transform='translate(3204.58 1560.78) rotate(255.013)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3207.17' cy='1570.44' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3207.17' y='1570.44' >CP_12_R</text>
+<ellipse  rx='227.119' ry='48.034' transform='translate(3207.17 1570.44) rotate(254.968)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3446.07' cy='1496.08' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3446.07' y='1496.08' >CP_13_L</text>
+<ellipse  rx='235.266' ry='49.8591' transform='translate(3446.07 1496.08) rotate(254.909)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3448.66' cy='1505.74' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3448.66' y='1505.74' >CP_13_R</text>
+<ellipse  rx='235.266' ry='49.8624' transform='translate(3448.66 1505.74) rotate(255.116)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3687.55' cy='1431.37' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3687.55' y='1431.37' >CP_14_L</text>
+<ellipse  rx='273.406' ry='52.2998' transform='translate(3687.55 1431.37) rotate(254.767)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3690.14' cy='1441.03' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3690.14' y='1441.03' >CP_14_R</text>
+<ellipse  rx='273.407' ry='52.2987' transform='translate(3690.14 1441.03) rotate(255.226)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3929.03' cy='1366.66' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3929.03' y='1366.66' >CP_15_L</text>
+<ellipse  rx='342.707' ry='55.2697' transform='translate(3929.03 1366.66) rotate(254.729)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3931.61' cy='1376.32' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3931.61' y='1376.32' >CP_15_R</text>
+<ellipse  rx='342.706' ry='55.2723' transform='translate(3931.61 1376.32) rotate(255.286)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4170.51' cy='1301.95' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4170.51' y='1301.95' >CP_16_L</text>
+<ellipse  rx='436.834' ry='58.7012' transform='translate(4170.51 1301.95) rotate(254.725)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4173.1' cy='1311.61' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4173.1' y='1311.61' >CP_16_R</text>
+<ellipse  rx='436.835' ry='58.6983' transform='translate(4173.1 1311.61) rotate(255.273)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4411.99' cy='1237.24' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4411.99' y='1237.24' >CP_17_L</text>
+<ellipse  rx='549.532' ry='62.5099' transform='translate(4411.99 1237.24) rotate(254.752)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4414.58' cy='1246.9' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4414.58' y='1246.9' >CP_17_R</text>
+<ellipse  rx='549.532' ry='62.5133' transform='translate(4414.58 1246.9) rotate(255.254)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4653.47' cy='1172.53' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4653.47' y='1172.53' >CP_18_L</text>
+<ellipse  rx='676.58' ry='66.6431' transform='translate(4653.47 1172.53) rotate(254.775)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4656.06' cy='1182.2' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4656.06' y='1182.2' >CP_18_R</text>
+<ellipse  rx='676.577' ry='66.6388' transform='translate(4656.06 1182.2) rotate(255.225)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4894.95' cy='1107.83' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4894.95' y='1107.83' >CP_19_L</text>
+<ellipse  rx='815.283' ry='71.03' transform='translate(4894.95 1107.83) rotate(254.8)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4897.53' cy='1117.49' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4897.53' y='1117.49' >CP_19_R</text>
+<ellipse  rx='815.282' ry='71.0344' transform='translate(4897.53 1117.49) rotate(255.204)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='5136.43' cy='1043.12' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='5136.43' y='1043.12' >CP_20_L</text>
+<ellipse  rx='963.934' ry='81.3743' transform='translate(5136.43 1043.12) rotate(254.821)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='5139.02' cy='1052.79' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='5139.02' y='1052.79' >CP_20_R</text>
+<ellipse  rx='963.936' ry='81.3547' transform='translate(5139.02 1052.79) rotate(255.178)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='429.221' cy='2311.19' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='429.221' y='2311.19' >TS_01</text>
+<ellipse  rx='620.079' ry='66.9722' transform='translate(429.221 2311.19) rotate(254.978)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='669.927' cy='2243.58' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='669.927' y='2243.58' >TS_02</text>
+<ellipse  rx='580.425' ry='62.0093' transform='translate(669.927 2243.58) rotate(255.025)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='912.187' cy='2181.77' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='912.187' y='2181.77' >TS_03</text>
+<ellipse  rx='530.282' ry='57.2378' transform='translate(912.187 2181.77) rotate(254.963)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1152.89' cy='2114.17' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1152.89' y='2114.17' >TS_04</text>
+<ellipse  rx='474.47' ry='52.7096' transform='translate(1152.89 2114.17) rotate(255.039)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1395.15' cy='2052.36' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1395.15' y='2052.36' >TS_05</text>
+<ellipse  rx='416.871' ry='48.4928' transform='translate(1395.15 2052.36) rotate(254.949)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1635.86' cy='1984.75' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1635.86' y='1984.75' >TS_06</text>
+<ellipse  rx='361.588' ry='44.6759' transform='translate(1635.86 1984.75) rotate(255.046)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='1878.11' cy='1922.95' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='1878.11' y='1922.95' >TS_07</text>
+<ellipse  rx='313.083' ry='41.3698' transform='translate(1878.11 1922.95) rotate(254.948)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2118.82' cy='1855.34' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2118.82' y='1855.34' >TS_08</text>
+<ellipse  rx='275.784' ry='38.705' transform='translate(2118.82 1855.34) rotate(255.034)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2361.08' cy='1793.53' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2361.08' y='1793.53' >TS_09</text>
+<ellipse  rx='252.474' ry='36.8215' transform='translate(2361.08 1793.53) rotate(254.974)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2601.78' cy='1725.93' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2601.78' y='1725.93' >TS_10</text>
+<ellipse  rx='241.689' ry='35.8416' transform='translate(2601.78 1725.93) rotate(255.006)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='2844.04' cy='1664.12' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='2844.04' y='1664.12' >TS_11</text>
+<ellipse  rx='236.466' ry='35.8413' transform='translate(2844.04 1664.12) rotate(254.988)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3084.74' cy='1596.52' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3084.74' y='1596.52' >TS_12</text>
+<ellipse  rx='227.19' ry='36.8209' transform='translate(3084.74 1596.52) rotate(255.014)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3327.01' cy='1534.71' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3327.01' y='1534.71' >TS_13</text>
+<ellipse  rx='225.427' ry='38.7063' transform='translate(3327.01 1534.71) rotate(255.014)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3567.71' cy='1467.1' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3567.71' y='1467.1' >TS_14</text>
+<ellipse  rx='248.358' ry='41.3712' transform='translate(3567.71 1467.1) rotate(254.949)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='3809.97' cy='1405.29' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='3809.97' y='1405.29' >TS_15</text>
+<ellipse  rx='303.332' ry='44.6776' transform='translate(3809.97 1405.29) rotate(255.084)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4050.67' cy='1337.69' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4050.67' y='1337.69' >TS_16</text>
+<ellipse  rx='386.427' ry='48.4941' transform='translate(4050.67 1337.69) rotate(254.918)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4292.93' cy='1275.87' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4292.93' y='1275.87' >TS_17</text>
+<ellipse  rx='490.789' ry='52.7106' transform='translate(4292.93 1275.87) rotate(255.082)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4533.63' cy='1208.27' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4533.63' y='1208.27' >TS_18</text>
+<ellipse  rx='611.243' ry='57.2389' transform='translate(4533.63 1208.27) rotate(254.929)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='4775.89' cy='1146.46' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='4775.89' y='1146.46' >TS_19</text>
+<ellipse  rx='744.481' ry='62.0104' transform='translate(4775.89 1146.46) rotate(255.065)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+<circle cx='5016.6' cy='1078.86' r='30.6801'  style='stroke:black;fill:green;stroke-width:1.53401;'/>
+<text font-family='sans-serif' transform='translate(49.0882 49.0882)' font-size='61.3602' x='5016.6' y='1078.86' >TS_20</text>
+<ellipse  rx='888.356' ry='66.9735' transform='translate(5016.6 1078.86) rotate(254.943)' style='stroke:grey;stroke-width:1.53401;fill:none;' />
+</svg>
