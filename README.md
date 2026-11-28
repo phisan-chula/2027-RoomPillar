@@ -26,7 +26,7 @@ The browser-based demonstration provides configurable room-and-pillar geometry, 
 
 The simulation investigates error propagation and geometric degeneracy in long underground survey control networks, where GNSS positioning is unavailable. It compares total station observation strategies, consecutive station links, and supplementary gyro-theodolite azimuth observations using least-squares network adjustment.
 
-**[Read the Full PDF Report](Traverse_Degeneracy_Dec2026.pdf)**
+**[Error Analysis and Geometric Degeneracy in the Design of an Underground Traverse Report](Traverse_Degeneracy_Dec2026.pdf)**
 
 | Simulation parameter | Configuration |
 |---|---|
