@@ -24,7 +24,9 @@ The browser-based demonstration provides configurable room-and-pillar geometry, 
 
 ## Underground Traverse Network Simulation
 
-The Python simulation investigates error propagation and geometric degeneracy in long underground survey control networks, where GNSS positioning is unavailable. It compares total station observation strategies, consecutive station links, and supplementary gyro-theodolite azimuth observations using least-squares network adjustment.
+The simulation investigates error propagation and geometric degeneracy in long underground survey control networks, where GNSS positioning is unavailable. It compares total station observation strategies, consecutive station links, and supplementary gyro-theodolite azimuth observations using least-squares network adjustment.
+
+**[Read the Full PDF Report](Traverse_Degeneracy_Dec2026.pdf)**
 
 | Simulation parameter | Configuration |
 |---|---|
@@ -32,13 +34,13 @@ The Python simulation investigates error propagation and geometric degeneracy in
 | Control target spacing | 250 m (example simulation) |
 | Horizontal direction standard deviation | 2 arcsec |
 | Distance standard deviation | 3 mm |
-| Gyro-azimuth standard deviation | 5, 20 or 60 arcsec |
+| Gyro-azimuth standard deviation | 5, 10 or 20 arcsec |
 | Network datum | Inner-constraint and fixed-control scenarios |
 | Error ellipses | 95% confidence level |
 
 Simulation cases compare networks with and without consecutive total station links and gyro observations, including gyro observation intervals of every fifth and tenth total station setup.
-
-
+## Summary Report
+[![Technical Report Preview](Traverse_Preview.png)](Traverse_Degeneracy_Dec2026.pdf)
 
 ## Research Objectives
 
