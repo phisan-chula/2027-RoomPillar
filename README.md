@@ -10,6 +10,12 @@ A research and simulation project for underground survey control network design,
 
 The browser-based demonstration provides configurable room-and-pillar geometry, multiple mining horizons, engineering and geomechanical indicators, 3D and 2D views, virtual walkthroughs, and illustrative machinery fleet and SLAM visualization.
 
+### Room-and-Pillar Mining with Machinery and Access Ramps
+
+**[Launch the interactive 3D machinery and ramp model](https://phisan-chula.github.io/2027-RoomPillar/room_pillar_machinery_ramp.html)** (requires GitHub Pages to be enabled for the `main` branch, root directory).
+
+[View or download the HTML source](room_pillar_machinery_ramp.html) — alternatively, download the HTML file and open it in a WebGL-enabled browser with internet access.
+
 ### Example mine configuration
 
 | Parameter | Value |
