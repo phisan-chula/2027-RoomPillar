@@ -39,8 +39,7 @@ The simulation investigates error propagation and geometric degeneracy in long u
 | Error ellipses | 95% confidence level |
 
 Simulation cases compare networks with and without consecutive total station links and gyro observations, including gyro observation intervals of every fifth and tenth total station setup.
-## Summary Report
-[![Technical Report Preview](Traverse_Preview.png)](Traverse_Degeneracy_Dec2026.pdf)
+
 
 ## Research Objectives
 
