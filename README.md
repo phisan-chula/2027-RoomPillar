@@ -42,39 +42,7 @@ The Python simulation investigates error propagation and geometric degeneracy in
 
 Simulation cases compare networks with and without consecutive total station links and gyro observations, including gyro observation intervals of every fifth and tenth total station setup.
 
-## Repository Contents
 
-| File or directory | Description |
-|---|---|
-| [corridor_network_sim_updated.py](corridor_network_sim_updated.py) | Survey network simulation, adjustment preparation and visualization |
-| [script_simu/](script_simu/) | Batch scripts for 5 km and 10 km traverse experiments |
-| [RESULT_run_5km_gyro5sec/](RESULT_run_5km_gyro5sec/) | Example simulation results |
-| [RESULT_run_5km_gyro5sec_fix/](RESULT_run_5km_gyro5sec_fix/) | Example fixed-control simulation results |
-| [Traverse_Degeneracy_Dec2026.pdf](Traverse_Degeneracy_Dec2026.pdf) | Technical report on traverse degeneracy |
-| [Traverse_Degeneracy_Dec2026.docx](Traverse_Degeneracy_Dec2026.docx) | Editable technical report |
-| [UndergrTraverse_PSN.pdf](UndergrTraverse_PSN.pdf) | Additional underground traverse documentation |
-| [subsurface_3d_machinery_room_and_pillar.html](subsurface_3d_machinery_room_and_pillar.html) | Interactive subsurface 3D visualization |
-| [underground_room_and_pillar_cad_gis_map_plan.html](underground_room_and_pillar_cad_gis_map_plan.html) | Underground CAD/GIS map and plan visualization |
-
-## Running the Simulation
-
-Clone the repository and install the Python dependencies:
-
-```bash
-git clone https://github.com/phisan-chula/2027-RoomPillar.git
-cd 2027-RoomPillar
-pip install numpy pandas geopandas shapely scipy lmfit matplotlib
-```
-
-Install GNU Gama (with `gama-local` available on your PATH) for network adjustment and optionally install `feh` for viewing output plots in Linux.
-
-Run an example experiment from the repository root:
-
-```bash
-bash script_simu/run_5km_gyro5sec_fix
-```
-
-The batch script runs five network configurations in parallel and generates plots, observation XML, coordinate CSV files and logs.
 
 ## Research Objectives
 
