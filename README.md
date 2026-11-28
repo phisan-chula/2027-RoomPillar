@@ -2,17 +2,13 @@
 
 A research and simulation project for underground survey control network design, traverse accuracy assessment, and interactive 3D visualization of room-and-pillar mining environments.
 
-## Interactive 3D Mine Model
+## Interactive 3D Mine Model : Room-and-Pillar Mining with Machinery and Access Ramps
 
 [![Room-and-pillar underground mining 3D CAD/GIS visualization](https://raw.githubusercontent.com/phisan-chula/2027-RoomPillar/0dc209da0c4cc0fe179a86c391e023ab66fff7f3/Room_Pillar_3d.jpeg)](https://sites.google.com/view/subsurface-3d-cadgis-room-and-/full-page-embed)
 
 **[Launch the interactive 3D machinery and ramp model](https://phisan-chula.github.io/2027-RoomPillar/room_pillar_machinery_ramp.html)** (Click the “Fleet & SLAM” button to explore a simulation of autonomous wheeled robots performing routine patrols, SLAM-based mapping, and underground inspections, alongside the logistics and operations of underground mining machinery.).
 
 The browser-based demonstration provides configurable room-and-pillar geometry, multiple mining horizons, engineering and geomechanical indicators, 3D and 2D views, virtual walkthroughs, and illustrative machinery fleet and SLAM visualization.
-
-### Room-and-Pillar Mining with Machinery and Access Ramps
-
-[View or download the HTML source](room_pillar_machinery_ramp.html) — alternatively, download the HTML file and open it in a WebGL-enabled browser with internet access.
 
 ### Example mine configuration
 
